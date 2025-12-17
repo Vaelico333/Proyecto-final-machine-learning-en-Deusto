@@ -9,6 +9,7 @@ class generador_datos():
                 escritor = csv.DictWriter(file, encabezados, lineterminator="\n")
                 escritor.writeheader()
                 escritor.writerows(datos)
+            # Devolvemos True si tuvo éxito, o False si no pudimos crear el archivo
             return True
         except FileNotFoundError:
             return False
@@ -18,23 +19,15 @@ class generador_datos():
         # En base al índice de masa corporal: un peso muy bajo o muy alto puede ser de riesgo
         if 'kg' in paciente['peso']: 
             peso = float(paciente['peso'].strip(' kg'))
-            if 'cm' in paciente['altura']:
-                altura_m = float(paciente['altura'].strip(' cm')) /100
-
-            if 'inch' in paciente['altura']:
-                altura_m = float(paciente['altura'].strip(' inch')) * 2.54 /100
-    
-            imc = peso / altura_m**2
-
-        if 'lb' in paciente['peso']:
+        elif 'lb' in paciente['peso']:
             peso = float(paciente['peso'].strip(' lb')) * 0.45359237
-            if 'cm' in paciente['altura']:
-                altura_m = float(paciente['altura'].strip(' cm')) /100
 
-            if 'inch' in paciente['altura']:
-                altura_m = float(paciente['altura'].strip(' inch')) * 2.54 /100
+        if 'cm' in paciente['altura']:
+            altura_m = float(paciente['altura'].strip(' cm')) /100
+        elif 'inch' in paciente['altura']:
+            altura_m = float(paciente['altura'].strip(' inch')) * 2.54 /100
     
-            imc = peso / altura_m**2
+        imc = peso / altura_m**2
 
         if imc < imc_rango[0] or imc > imc_rango[1]:
             hospitalizacion += 1
@@ -60,23 +53,32 @@ class generador_datos():
     def crear_errores(paciente: dict, prob: int=1) -> dict:
         import random
         import numpy as np
+        # Definimos la probabilidad como 1/prob+1:
         alea = random.randint(0, prob)
+        # k es el número de columnas a aplicar cambios
         k = random.randint(0,6)
+        # Elegimos k columnas de entre las 6 disponibles
         cambio = random.choices(list(paciente.keys()), k=k)
         for elemento in cambio:
+            # Dentro de cada elemento, elegimos de manera aleatoria si recibirá cambios
             suerte = random.randint(0, prob)
             if suerte == alea:
+                # Si va a recibir cambios, elegimos el tipo de cambio
                 eleccion = random.randint(0,3)
                 if eleccion == 0:
+                    # Ningún cambio
                     pass
                 elif eleccion == 1:
+                    # Cambiar por NaN
                     paciente[elemento] = np.nan
                 elif eleccion == 2:
+                    # Cambiar el signo a negativo
                     try:
-                        paciente[elemento] = '-' + paciente[elemento]
-                    except TypeError:
                         paciente[elemento] = paciente[elemento] * -1
+                    except TypeError:
+                        paciente[elemento] = '-' + paciente[elemento]
                 else:
+                    # Cambiar por 0
                     paciente[elemento] = 0
             else:
                 pass
@@ -159,6 +161,7 @@ class generador_datos():
             errores = random.randint(1, 10)
             paciente = generador_datos.crear_errores(paciente, errores)
 
+            # Generamos el dato "hospitalizacion" en base a si se cumplen las condiciones
             if hospitalizacion > 0:
                 paciente['hospitalizacion'] = 'Sí'
                 if len(enfermos) < num * prop_enf:
@@ -173,4 +176,4 @@ class generador_datos():
         pacientes.sort(key=lambda x: x['id'])
         return generador_datos.guardar_generador_datos(pacientes)
 
-#generador_datos.crear_generador_datos(num=187)
+generador_datos.crear_generador_datos(num=1000)

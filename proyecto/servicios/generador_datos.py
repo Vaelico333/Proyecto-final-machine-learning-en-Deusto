@@ -84,7 +84,7 @@ class generador_datos():
                 pass
         return paciente
 
-    def crear_generador_datos(num: int = 100, prop_enf: float = 0.5) -> bool:
+    def generar_datos(num: int = 100, prop_enf: float = 0.5) -> bool:
         import numpy as np
         import random
         sanos = []
@@ -176,4 +176,4 @@ class generador_datos():
         pacientes.sort(key=lambda x: x['id'])
         return generador_datos.guardar_generador_datos(pacientes)
 
-generador_datos.crear_generador_datos(num=1000)
+generador_datos.generar_datos(num=1000)

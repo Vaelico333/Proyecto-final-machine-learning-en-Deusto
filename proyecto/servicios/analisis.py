@@ -1,3 +1,23 @@
+class leer_datos:
+    def abrir_csv(url: str = 'datos_forjados.csv'):
+        """Abre un CSV y devuelve un DataFrame."""
+        import pandas as pd
+        import os
+        url = os.path.join(os.path.dirname(__file__), url)
+        with open(url,'r',encoding='UTF-8') as file:
+            df = pd.read_csv(file)
+        return df
+    
+    def muestra_df(url: str = 'datos_forjados.csv'):
+        """
+        Establece una ruta para los datos, los abre y devuelve 
+        una muestra consistente en las 10 primeras y las 10 últimas filas.
+        """
+        import pandas as pd
+        df = leer_datos.abrir_csv(url)
+        df_muestra = pd.concat([df.head(15), df.tail(15)])
+        return df_muestra
+    
 class analisis():
     import pandas as pd
     def operacion_str(num: float, *args) -> float:

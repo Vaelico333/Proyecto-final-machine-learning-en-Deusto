@@ -12,12 +12,12 @@ Interfaz: tipo dashboard
     · mostrar homogeneización y transformación de datos en numérico
         -> Formulario: elegir columna y mostrar resumen de unidades existentes y unidades objetivo
         -> A continuación: mostrar QLabel con el método usado para transformarlos
-        -> Botón: Continuar EDA (pasa a la siguiente pestaña) ç
+        -> Botón: Continuar EDA (pasa a la siguiente pestaña) 
     · mostrar vacíos, NaN, 0, negativos
         -> Mostrar características de los datos
         -> Formulario: elegir columna y mostrar resumen de errores
         -> A continuación: mostrar QLabel con el método usado para corregirlos
-        -> Botón: Continuar EDA (pasa a la siguiente pestaña) 
+        -> Botón: pasar a creación del modelo
 
     ---> NO <---
     · crear y mostrar IMC
@@ -71,8 +71,8 @@ class PaginaBienvenida(QWidget):
         self.init_ui()
     
     def init_ui(self):
-        self.main_layout = QVBoxLayout()
-        self.main_layout.setAlignment(Qt.AlignCenter)
+        self.layout_principal = QVBoxLayout()
+        self.layout_principal.setAlignment(Qt.AlignCenter)
         
         # Título
         self.etiqueta_titulo = QLabel("Análisis de datos médicos")
@@ -84,9 +84,6 @@ class PaginaBienvenida(QWidget):
         self.etiqueta_titulo.setFrameShadow(QFrame.Raised)
         self.etiqueta_titulo.setLineWidth(5)
         self.etiqueta_titulo.setAlignment(Qt.AlignCenter)
-        self.main_layout.addWidget(self.etiqueta_titulo)
-        
-        self.main_layout.addSpacing(30)
         
         # Cuadro de texto 
         self.caja_texto = QLabel(textos.bienvenida())
@@ -104,9 +101,6 @@ class PaginaBienvenida(QWidget):
         self.area_texto.setFrameShadow(QFrame.Raised)
         self.area_texto.setLineWidth(4)
 
-        self.main_layout.addWidget(self.area_texto)
-        
-        self.main_layout.addSpacing(30)
         
         # Botón para ir a la página de creación de datos
         self.btn_seguir = QPushButton("Ir a creación de los datos ➢")
@@ -114,9 +108,14 @@ class PaginaBienvenida(QWidget):
         self.btn_seguir.setMinimumHeight(40)
         self.btn_seguir.clicked.connect(self.ir_a_datos)
         self.btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
-        self.main_layout.addWidget(self.btn_seguir)
-                
-        self.setLayout(self.main_layout)
+
+        # Añadimos los widgets al layout
+        self.layout_principal.addWidget(self.etiqueta_titulo)
+        self.layout_principal.addSpacing(30)
+        self.layout_principal.addWidget(self.area_texto)
+        self.layout_principal.addSpacing(30)
+        self.layout_principal.addWidget(self.btn_seguir)
+        self.setLayout(self.layout_principal)
     
     def ir_a_datos(self):
         self.widget_apilado.setCurrentIndex(1)
@@ -130,7 +129,7 @@ class CreacionDatos(QWidget):
 
     def init_ui(self):
 
-        self.main_layout = QVBoxLayout()
+        self.layout_principal = QVBoxLayout()
         
         # Título
         self.etiqueta_titulo = QLabel("Generación de Datos")
@@ -142,11 +141,7 @@ class CreacionDatos(QWidget):
         self.etiqueta_titulo.setFrameShadow(QFrame.Raised)
         self.etiqueta_titulo.setLineWidth(5)
         self.etiqueta_titulo.setAlignment(Qt.AlignCenter)
-        self.main_layout.addWidget(self.etiqueta_titulo)
         
-
-        self.main_layout.addSpacing(30)
-
         # Contenedor del contenedor de formulario y la vista de tabla
 
         self.layout_contenido = QHBoxLayout()
@@ -179,7 +174,6 @@ class CreacionDatos(QWidget):
         self.combo_cantidad = QComboBox()
         self.combo_cantidad.addItems(["500", "1000", "5000"])
         self.combo_cantidad.setMinimumWidth(150)
-        self.form_layout.addRow("Cantidad de datos:", self.combo_cantidad)
         
         # Slider horizontal (1-100%)
         self.slider_layout = QHBoxLayout()
@@ -195,10 +189,6 @@ class CreacionDatos(QWidget):
         self.slider_label.setMinimumWidth(50)
         self.slider.valueChanged.connect(self.update_slider_label)
         
-        self.slider_layout.addWidget(self.slider)
-        self.slider_layout.addWidget(self.slider_label)
-        
-        self.form_layout.addRow("Porcentaje de personas a hospitalizar:", self.slider_layout)
         
         # Botón para generar datos
         self.btn_generar = QPushButton("Generar Datos")
@@ -209,9 +199,6 @@ class CreacionDatos(QWidget):
         self.btn_generar.clicked.connect(self.cargar_dataframe)
         
         self.btn_contenedor = QHBoxLayout()
-        self.btn_contenedor.addStretch()
-        self.btn_contenedor.addWidget(self.btn_generar)
-        self.btn_contenedor.addStretch()
 
         # Vista de tabla de los datos
         self.tabla_muestra = QTableWidget()
@@ -219,15 +206,6 @@ class CreacionDatos(QWidget):
         self.tabla_muestra.horizontalHeader().setStretchLastSection(True)
         self.tabla_muestra.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
-        # Agregamos las partes a la página
-        self.layout_formulario.addLayout(self.form_layout)
-        self.layout_formulario.addWidget(self.area_doc)
-        self.layout_formulario.addLayout(self.btn_contenedor)
-        self.layout_contenido.addLayout(self.layout_formulario)
-        self.layout_contenido.addWidget(self.tabla_muestra)
-        self.main_layout.addLayout(self.layout_contenido)
-                    
-        self.main_layout.addSpacing(30)
                 
         # Botón para continuar al EDA
         self.btn_seguir = QPushButton("Ir a análisis exploratorio ➢")
@@ -235,9 +213,33 @@ class CreacionDatos(QWidget):
         self.btn_seguir.setMinimumHeight(40)
         self.btn_seguir.clicked.connect(self.ir_a_eda)
         self.btn_seguir.setStyleSheet(u"background-color: #a82626;"+"color: #ffcb53;")
-        self.main_layout.addWidget(self.btn_seguir)
         
-        self.setLayout(self.main_layout)
+        # Agregamos las partes a la página
+        self.layout_principal.addWidget(self.etiqueta_titulo)
+
+        self.layout_principal.addSpacing(30)
+
+        self.slider_layout.addWidget(self.slider)
+        self.slider_layout.addWidget(self.slider_label)
+        self.form_layout.addRow("Cantidad de datos:", self.combo_cantidad)
+        self.form_layout.addRow("Porcentaje de personas a hospitalizar:", self.slider_layout)
+        self.layout_formulario.addLayout(self.form_layout)
+
+        self.layout_formulario.addWidget(self.area_doc)
+        self.btn_contenedor.addStretch()
+        self.btn_contenedor.addWidget(self.btn_generar)
+        self.btn_contenedor.addStretch()
+        self.layout_formulario.addLayout(self.btn_contenedor)
+
+        self.layout_contenido.addLayout(self.layout_formulario)
+        self.layout_contenido.addWidget(self.tabla_muestra)
+
+        self.layout_principal.addLayout(self.layout_contenido)
+                    
+        self.layout_principal.addSpacing(30)
+
+        self.layout_principal.addWidget(self.btn_seguir)
+        self.setLayout(self.layout_principal)
     
     def update_slider_label(self, value):
         """Actualiza el label del slider con el porcentaje"""
@@ -293,14 +295,30 @@ class CreacionDatos(QWidget):
 
 class PaginaEDA(QWidget):
     """Página de análisis EDA"""
-    def __init__(self):
-        super().__init__()
     def __init__(self, widget_apilado):
         super().__init__()
         self.widget_apilado = widget_apilado
         self.init_ui()
 
     def init_ui(self):
+        self.layout_principal = QVBoxLayout()
+
+        self.etiqueta_titulo = QLabel("Análisis Exploratorio")
+        self.etiqueta_titulo.setGeometry(QRect(165, 50, 850, 100))
+        self.fuente_titulo = QFont("OCR A Extended", 72, 50)
+        self.etiqueta_titulo.setFont(self.fuente_titulo)
+        self.etiqueta_titulo.setStyleSheet(u"background-color: rgb(0, 255, 255);""")
+        self.etiqueta_titulo.setFrameShape(QFrame.Panel)
+        self.etiqueta_titulo.setFrameShadow(QFrame.Raised)
+        self.etiqueta_titulo.setLineWidth(5)
+        self.etiqueta_titulo.setAlignment(Qt.AlignCenter)
+
+        self.pestañas = QTabWidget()
+        self.transformacion = self.crear_pest("num")
+        self.errores = self.crear_pest("err")
+        self.pestañas.addTab(self.transformacion, u"Transformación")
+        self.pestañas.addTab(self.errores, u"Errores")
+
         layout = QGridLayout()
         label = QLabel("Página de EDA")
         label.setFont(QFont("Arial", 16))
@@ -312,10 +330,103 @@ class PaginaEDA(QWidget):
         self.btn_seguir.setMinimumHeight(40)
         self.btn_seguir.clicked.connect(self.ir_a_modelo)
         self.btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
-        layout.addWidget(self.btn_seguir)
 
-        self.setLayout(layout)
+        self.layout_principal.addWidget(self.etiqueta_titulo)
+        self.layout_principal.addWidget(self.pestañas)
+        self.layout_principal.addWidget(self.btn_seguir)
+        self.setLayout(self.layout_principal)
+
+    def cargar_dataframe(self, muestra_df: QTableWidget):
+        """Carga un DataFrame en la tabla"""
+        df = leer_datos.muestra_df()
+
+        if df is None or df.empty:
+            muestra_df.setRowCount(0)
+            muestra_df.setColumnCount(0)
+            return
+        
+        # Configurar dimensiones
+        muestra_df.setRowCount(df.shape[0])
+        try:
+            muestra_df.setColumnCount(df.shape[1])
+        except IndexError:
+            muestra_df.setColumnCount(1)
+        
+        # Configurar encabezados
+        muestra_df.setHorizontalHeaderLabels(df.columns.tolist())
+        muestra_df.setVerticalHeaderLabels([str(i) for i in df.index])
+        
+        # Llenar la tabla con los datos
+        for i in range(df.shape[0]):
+            for j in range(df.shape[1]):
+                value = str(df.iloc[i, j])
+                item = QTableWidgetItem(value)
+                item.setTextAlignment(Qt.AlignCenter)
+                # Hacer las celdas de solo lectura
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                muestra_df.setItem(i, j, item)
+        return muestra_df
     
+    def crear_pest(self, nom: str):
+        pestaña = QWidget()
+
+        layout_pest = QHBoxLayout()
+
+        layout_izq = QVBoxLayout()
+
+        form_layout = QHBoxLayout()
+
+        form_cols = QComboBox()
+
+        form_accion = QComboBox()
+
+        muestra_df = QTableWidget()
+        muestra_df = self.cargar_dataframe(muestra_df)
+
+        llamadas = {"num":"textos.transf_num()",
+                    "err":"textos.trat_err()"}
+
+        caja_texto = QLabel(eval(llamadas[nom]))
+        caja_texto.setWordWrap(True)
+        caja_texto.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        caja_texto.setFont(QFont("Noto Serif", 14))
+        caja_texto.setStyleSheet(u"padding: 15px;"
+                                      "background-color:#777777;"
+                                      "color:#ffffff;")
+
+        area_doc = QScrollArea()
+        area_doc.setWidgetResizable(True)
+        area_doc.setWidget(caja_texto)
+        area_doc.setFrameShape(QFrame.Box)
+        area_doc.setFrameShadow(QFrame.Raised)
+        area_doc.setLineWidth(4)
+
+        doc_layout = QHBoxLayout()
+        doc_layout.addWidget(area_doc)
+
+        if nom == 'num':
+            btn_arreglar = QPushButton(u"Transformar datos")
+        elif nom == 'err':
+            btn_arreglar = QPushButton(u"Eliminar errores")
+        btn_arreglar.clicked.connect(self.ir_a_modelo)
+
+        form_layout.addStretch()
+        form_layout.addWidget(form_cols)
+        if nom == 'err':
+            form_layout.addWidget(form_accion)
+        form_layout.addWidget(btn_arreglar)
+        form_layout.addStretch()
+        layout_izq.addLayout(form_layout)
+        layout_izq.addLayout(doc_layout)
+        layout_pest.addLayout(layout_izq)
+        layout_pest.addWidget(muestra_df)
+        if nom == 'num':
+            layout_pest.setStretch(0,8)
+            layout_pest.setStretch(1,2)
+        pestaña.setLayout(layout_pest)
+
+        return pestaña
+
     def ir_a_modelo(self):
         self.widget_apilado.setCurrentIndex(3)
 

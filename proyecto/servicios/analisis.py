@@ -70,7 +70,7 @@ class Analisis():
             num = operadores[operacion](num, float(numero))
         return num
 
-    def cadena_a_numero(df: pd.DataFrame, cols: list = None, modo: str = 'num') -> pd.DataFrame:
+    def cadena_a_numero(df: pd.DataFrame=pd.DataFrame(), cols: list = None, modo: str = 'num') -> pd.DataFrame:
         """
         Convierte las columnas con medidas de cadena de caracteres a número de coma flotante, 
         elimina el nombre de la unidad y 
@@ -104,6 +104,9 @@ class Analisis():
             'cm' : '/100',
             'inch' : '*0.0254',
             'mmol/L' : '*17.5 +3.75'}
+
+        if df.empty:
+            df = Leer_Datos.abrir_csv()
 
         if not cols:
             cols = list(df.columns)
@@ -211,6 +214,9 @@ class Analisis():
             df.loc[df[cols] < 0, cols] *= -1 # Si el dato es negativo, lo volvemos positivo
             return df[cols], (num_nan[cols], num_cero, num_neg)
 
+'''class Graficas():
+
+    def '''
 '''import pandas as pd
 df = Leer_Datos.abrir_csv()
 df = Analisis.cadena_a_numero(df, modo='num')

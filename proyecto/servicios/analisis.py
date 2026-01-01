@@ -1,4 +1,5 @@
-class leer_datos:
+from servicios.generador_datos import Generador_Datos 
+class Leer_Datos:
     import pandas as pd
     def abrir_csv(url: str = 'datos_forjados.csv') -> pd.DataFrame:
         """
@@ -13,11 +14,15 @@ class leer_datos:
         import pandas as pd
         import os
         url = os.path.join(os.path.dirname(__file__), url)
-        with open(url,'r',encoding='UTF-8') as file:
-            df = pd.read_csv(file)
+        try:
+            with open(url,'r',encoding='UTF-8') as file:
+                df = pd.read_csv(file)
+        except FileNotFoundError:
+            Generador_Datos.generar_datos(1)
+            df = Leer_Datos.abrir_csv()
         return df
     
-    def muestra_df(url: str = 'datos_forjados.csv', df = None) -> pd.DataFrame | pd.Series:
+    def muestra_df(url: str = 'datos_forjados.csv', df = pd.DataFrame()) -> pd.DataFrame | pd.Series:
         """
         Docstring for muestra_df
         
@@ -29,12 +34,12 @@ class leer_datos:
         :rtype: DataFrame | Series
         """
         import pandas as pd
-        if not df:  
-            df = leer_datos.abrir_csv(url)
+        if df.empty:  
+            df = Leer_Datos.abrir_csv(url)
         df_muestra = pd.concat([df.head(15), df.tail(15)])
         return df_muestra
     
-class analisis():
+class Analisis():
     import pandas as pd
     def operacion_str(num: float, *args) -> float:
         """
@@ -84,7 +89,6 @@ class analisis():
         # Creamos un diccionario para otorgar una nueva columna numérica 
         # por cada vieja columna categórica
         columnas = {
-            'edad':'edad',
             'peso':'peso_kg',
             'altura':'altura_m',
             'glucosa':'glucosa_mg_dL',
@@ -102,7 +106,7 @@ class analisis():
             'mmol/L' : '*17.5 +3.75'}
 
         if not cols:
-            cols = df.columns
+            cols = list(df.columns)
         # Contamos cuántas veces aparece una unidad estándar y cuántas una no estándar 
         # la idea es usarlo solo cuando sea una columna y no un DF completo
         estandar = 0
@@ -140,7 +144,7 @@ class analisis():
                                     if unidad in valor: # Si el dato contiene la unidad, así evitamos 0 y NaN
                                         valor_num = valor.replace(f' {unidad}', '') # Le quitamos la unidad
                                         # Usando otra función, convertimos a la unidad correspondiente
-                                        valor_limpio = round(analisis.operacion_str(float(valor_num), *factores_conversion[unidad].split()), 2)
+                                        valor_limpio = round(Analisis.operacion_str(float(valor_num), *factores_conversion[unidad].split()), 2)
                                         valores_finales.append(valor_limpio)
                                         agregado = True
                                         no_estandar += 1
@@ -151,19 +155,25 @@ class analisis():
             df[columnas[col]] = df[columnas[col]].astype(float)
 
         # Defino 3 modos: 
-        if modo == 'columna': # Para retornar una columna concreta
-            return pd.DataFrame(df[columnas[col]]), [estandar, no_estandar]
-        elif modo == 'total': # Para retornar tanto datos sin transformar como transformados, en el mismo DF
+        if modo == 'total': # Para retornar tanto datos sin transformar como transformados, en el mismo DF
             return df
         elif modo == 'num': # Para retornar solamente los datos transformados
             df_num = pd.DataFrame()
             for df_col in df.columns:
                 if df_col not in columnas.keys():
                     df_num[df_col] = df[df_col]
-            for col in columnas.keys():
-                df_num[columnas[col]] = analisis.cadena_a_numero(df, col, 'columna')
+                elif df_col in columnas.keys():
+                    df.drop(columns=df_col)
+            df_num.drop(columns='id', inplace=True)
             return df_num
-                
+        elif modo == 'columna': # Para retornar una columna concreta
+            for col in cols:
+                if col in columnas.keys():
+                    return pd.DataFrame(df[columnas[col]]), [estandar, no_estandar]
+                elif col not in columnas.keys():
+                    df = Leer_Datos.abrir_csv()
+                    return pd.DataFrame(df[col]), [estandar, no_estandar]
+                            
                   
     
     def limpiar_errores(df: pd.DataFrame, cols: str = None, modo: str = 'total') -> pd.DataFrame:
@@ -190,19 +200,21 @@ class analisis():
             return df
         
         if modo == 'columna' and cols:
-            num_no_nan = df[cols].count()
-            num_nan = len(df[cols]) - num_no_nan
-            num_cero = len(df.loc[df[cols] == 0, cols])
-            num_neg = len(df.loc[df[cols] < 0, cols])
+            num_no_nan = df.count()
+            num_nan = len(df) - num_no_nan
+            num_cero = len(df[df[cols] == 0])
+            num_neg = len(df[df[cols] < 0])
 
             df[cols] = df[cols].fillna(value=df[cols].mean()) # Reemplazamos NaN por la media de valores
             df[cols] = df[cols].replace(to_replace=0, value=df[cols].mean()) # Reemplazamos 0 por la media de valores
             df[cols] = [round(num, 2) for num in df[cols]] # Redondeamos al 2º decimal
             df.loc[df[cols] < 0, cols] *= -1 # Si el dato es negativo, lo volvemos positivo
-            return df[cols], (num_nan, num_cero, num_neg)
+            return df[cols], (num_nan[cols], num_cero, num_neg)
 
-import pandas as pd
-df = leer_datos.abrir_csv()
-df, datos = analisis.cadena_a_numero(df, cols=['altura'], modo='columna')
-#df = pd.DataFrame(df)
-print(analisis.limpiar_errores(df=df, cols='altura_m', modo='columna'))
+'''import pandas as pd
+df = Leer_Datos.abrir_csv()
+df = Analisis.cadena_a_numero(df, modo='num')
+print(df)
+'''#df = pd.DataFrame(df)
+#limpieza = Analisis.limpiar_errores(df=df[0], cols='peso_kg', modo='columna')
+#print(type(limpieza[0]))

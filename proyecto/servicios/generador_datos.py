@@ -1,4 +1,4 @@
-class generador_datos():
+class Generador_Datos():
     def guardar_generador_datos(datos: list[dict], url: str = 'datos_forjados.csv') -> bool:
         import os
         import csv
@@ -74,9 +74,10 @@ class generador_datos():
                 elif eleccion == 2:
                     # Cambiar el signo a negativo
                     try:
-                        paciente[elemento] = paciente[elemento] * -1
+                        if '-' not in paciente[elemento]:
+                            paciente[elemento] = '-' + paciente[elemento]
                     except TypeError:
-                        paciente[elemento] = '-' + paciente[elemento]
+                        paciente[elemento] = paciente[elemento] * -1
                 else:
                     # Cambiar por 0
                     paciente[elemento] = 0
@@ -146,20 +147,20 @@ class generador_datos():
             # Si la edad es baja o alta, cambian las condiciones de hospitalización:
             # <20 años: IMC<15 | IMC>40, GLUC<70 | GLUC>400, TEN>=180/110
             if paciente['edad'] < 20:
-                hospitalizacion = generador_datos.condicion_hosp(paciente, imc_rango=[15,40], gluc_rango=[70,400], ten_sis=180)
+                hospitalizacion = Generador_Datos.condicion_hosp(paciente, imc_rango=[15,40], gluc_rango=[70,400], ten_sis=180)
 
             # 20< años <60: IMC<15 | IMC>40, GLUC<54 | GLUC>450, TEN>=180/110
             elif 20 < paciente['edad'] < 60:
-                hospitalizacion = generador_datos.condicion_hosp(paciente, imc_rango=[15,40], gluc_rango=[54,450], ten_sis=180)
+                hospitalizacion = Generador_Datos.condicion_hosp(paciente, imc_rango=[15,40], gluc_rango=[54,450], ten_sis=180)
 
             # >60 años: IMC<15 | IMC>40, GLUC<70 | GLUC>300, TEN>=180/110
             else:
-                hospitalizacion = generador_datos.condicion_hosp(paciente, imc_rango=[15,40], gluc_rango=[70,300], ten_sis=180)
+                hospitalizacion = Generador_Datos.condicion_hosp(paciente, imc_rango=[15,40], gluc_rango=[70,300], ten_sis=180)
 
             # Introducción de errores: de manera aleatoria, introducción 
             # de valores negativos, 0, NaN o sin cambios.
             errores = random.randint(1, 10)
-            paciente = generador_datos.crear_errores(paciente, errores)
+            paciente = Generador_Datos.crear_errores(paciente, errores)
 
             # Generamos el dato "hospitalizacion" en base a si se cumplen las condiciones
             if hospitalizacion > 0:
@@ -174,6 +175,4 @@ class generador_datos():
             id += 1
 
         pacientes.sort(key=lambda x: x['id'])
-        return generador_datos.guardar_generador_datos(pacientes)
-
-generador_datos.generar_datos(num=1000)
+        return Generador_Datos.guardar_generador_datos(pacientes)

@@ -86,7 +86,7 @@ class PaginaBienvenida(QWidget):
         self.etiqueta_titulo.setAlignment(Qt.AlignCenter)
         
         # Cuadro de texto 
-        self.caja_texto = QLabel(textos.bienvenida())
+        self.caja_texto = QLabel(Textos.bienvenida())
         self.caja_texto.setWordWrap(True)
         self.caja_texto.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.caja_texto.setFont(QFont("Noto Serif", 20))
@@ -150,7 +150,7 @@ class CreacionDatos(QWidget):
         self.layout_formulario = QVBoxLayout()
         
         # Explicación del formulario
-        self.caja_texto = QLabel(textos.creacion())
+        self.caja_texto = QLabel(Textos.creacion())
         self.caja_texto.setWordWrap(True)
         self.caja_texto.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.caja_texto.setFont(QFont("Noto Serif", 14))
@@ -187,7 +187,7 @@ class CreacionDatos(QWidget):
         
         self.slider_label = QLabel("50%")
         self.slider_label.setMinimumWidth(50)
-        self.slider.valueChanged.connect(self.update_slider_label)
+        self.slider.valueChanged.connect(self.actualizar_texto_slider)
         
         
         # Botón para generar datos
@@ -241,17 +241,17 @@ class CreacionDatos(QWidget):
         self.layout_principal.addWidget(self.btn_seguir)
         self.setLayout(self.layout_principal)
     
-    def update_slider_label(self, value):
+    def actualizar_texto_slider(self, value):
         """Actualiza el label del slider con el porcentaje"""
         self.slider_label.setText(f"{value}%")
     
     def info_df(self):
         """Recopila y devuelve información de los datos creados."""
-        return info.info_datos_originales()
+        return Info.info_datos_originales()
 
     def cargar_dataframe(self):
         """Carga un DataFrame en la tabla"""
-        df = leer_datos.muestra_df()
+        df = Leer_Datos.muestra_df()
         if df is None or df.empty:
             self.tabla_muestra.setRowCount(0)
             self.tabla_muestra.setColumnCount(0)
@@ -279,7 +279,7 @@ class CreacionDatos(QWidget):
         info = self.info_df()
 
         # Mostrar información
-        self.caja_texto.setText(textos.creacion() + '\n\n' + info)
+        self.caja_texto.setText(Textos.creacion() + '\n\n' + info)
     
     def generar_datos(self):
         """Llama a la función de generación de datos y muestra el resultado"""
@@ -287,7 +287,7 @@ class CreacionDatos(QWidget):
         porcentaje = self.slider.value()
         
         # Llamar a tu función (descomenta cuando tengas el módulo)
-        generador_datos.generar_datos(cantidad, porcentaje/100)
+        Generador_Datos.generar_datos(cantidad, porcentaje/100)
                     
     def ir_a_eda(self):
         self.widget_apilado.setCurrentIndex(2)
@@ -335,10 +335,22 @@ class PaginaEDA(QWidget):
         self.layout_principal.addWidget(self.pestañas)
         self.layout_principal.addWidget(self.btn_seguir)
         self.setLayout(self.layout_principal)
+    
+    def err_columna(self, col):
 
-    def cargar_dataframe(self, muestra_df: QTableWidget):
+        df = Leer_Datos.abrir_csv()
+        if col in df.columns:
+            df, datos = Analisis.cadena_a_numero(df, cols=[col], modo='columna')
+            return df, datos
+    
+    def transf_columna(self, col):
+        pass
+
+
+
+    def cargar_dataframe(self, df, muestra_df: QTableWidget):
         """Carga un DataFrame en la tabla"""
-        df = leer_datos.muestra_df()
+        df = Leer_Datos.muestra_df(df=df)
 
         if df is None or df.empty:
             muestra_df.setRowCount(0)
@@ -377,14 +389,19 @@ class PaginaEDA(QWidget):
         form_layout = QHBoxLayout()
 
         form_cols = QComboBox()
-
-        form_accion = QComboBox()
+        df = Leer_Datos.abrir_csv()
+        if nom == 'num':
+            columnas = [col for col in df.columns if df[col].dtype == 'object' and col != 'hospitalizacion']
+            form_cols.addItems(['Elige una columna'] + columnas)
+        elif nom == 'err':
+            df_num = Analisis.cadena_a_numero(df)
+            columnas = [col for col in df_num.columns if col != 'id']
+            form_cols.addItems(['Elige una columna'] + columnas)
 
         muestra_df = QTableWidget()
-        muestra_df = self.cargar_dataframe(muestra_df)
 
-        llamadas = {"num":"textos.transf_num()",
-                    "err":"textos.trat_err()"}
+        llamadas = {"num":"Textos.transf_num()",
+                    "err":"Textos.trat_err()"}
 
         caja_texto = QLabel(eval(llamadas[nom]))
         caja_texto.setWordWrap(True)
@@ -404,16 +421,36 @@ class PaginaEDA(QWidget):
         doc_layout = QHBoxLayout()
         doc_layout.addWidget(area_doc)
 
+        def boton_transf():
+            col = form_cols.currentText()
+            if col != 'Elige una columna':
+                df = Leer_Datos.abrir_csv()
+                info = Info.info_datos_num(col)
+                caja_texto.setText(eval(llamadas['num']) + info)
+                df_num, datos = Analisis.cadena_a_numero(df=df, cols=[col], modo='columna')
+                self.cargar_dataframe(df_num, muestra_df)
+
+        def boton_err():
+            col = form_cols.currentText()
+            if col != 'Elige una columna':
+                df = Leer_Datos.abrir_csv()
+                df_num = Analisis.cadena_a_numero(df=df, modo='num')
+                df_err = Analisis.limpiar_errores(df=df_num)
+                self.cargar_dataframe(df_err, muestra_df)
+                info = Info.info_datos_noerr(col)
+                caja_texto.setText(eval(llamadas['err']) + info)
+
         if nom == 'num':
             btn_arreglar = QPushButton(u"Transformar datos")
+            btn_arreglar.clicked.connect(boton_transf)
+
         elif nom == 'err':
             btn_arreglar = QPushButton(u"Eliminar errores")
-        btn_arreglar.clicked.connect(self.ir_a_modelo)
+            btn_arreglar.clicked.connect(boton_err)
+
 
         form_layout.addStretch()
         form_layout.addWidget(form_cols)
-        if nom == 'err':
-            form_layout.addWidget(form_accion)
         form_layout.addWidget(btn_arreglar)
         form_layout.addStretch()
         layout_izq.addLayout(form_layout)
@@ -421,12 +458,15 @@ class PaginaEDA(QWidget):
         layout_pest.addLayout(layout_izq)
         layout_pest.addWidget(muestra_df)
         if nom == 'num':
-            layout_pest.setStretch(0,8)
-            layout_pest.setStretch(1,2)
+            layout_pest.setStretch(0,9)
+            layout_pest.setStretch(1,1)
+        elif nom == 'err':
+            layout_pest.setStretch(0,65)
+            layout_pest.setStretch(1,35)
         pestaña.setLayout(layout_pest)
 
         return pestaña
-
+    
     def ir_a_modelo(self):
         self.widget_apilado.setCurrentIndex(3)
 

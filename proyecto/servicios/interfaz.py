@@ -61,6 +61,8 @@ from PyQt5.QtGui import *
 from servicios.acciones import *
 from servicios.generador_datos import *
 from servicios.analisis import *
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
 class PaginaBienvenida(QWidget):
@@ -292,7 +294,6 @@ class CreacionDatos(QWidget):
     def ir_a_eda(self):
         self.widget_apilado.setCurrentIndex(2)
 
-
 class PaginaEDA(QWidget):
     """Página de análisis EDA"""
     def __init__(self, widget_apilado):
@@ -316,8 +317,10 @@ class PaginaEDA(QWidget):
         self.pestañas = QTabWidget()
         self.transformacion = self.crear_pest("num")
         self.errores = self.crear_pest("err")
+        self.graficas = self.crear_pest_graf()
         self.pestañas.addTab(self.transformacion, u"Transformación")
         self.pestañas.addTab(self.errores, u"Errores")
+        self.pestañas.addTab(self.graficas, u"Representación gráfica")
 
         layout = QGridLayout()
         label = QLabel("Página de EDA")
@@ -325,28 +328,9 @@ class PaginaEDA(QWidget):
         label.setAlignment(Qt.AlignCenter)
         layout.addWidget(label)
 
-        self.btn_seguir = QPushButton("Ir a creación del modelo ➢")
-        self.btn_seguir.setFont(QFont("Eras Medium ITC", 12))
-        self.btn_seguir.setMinimumHeight(40)
-        self.btn_seguir.clicked.connect(self.ir_a_modelo)
-        self.btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
-
         self.layout_principal.addWidget(self.etiqueta_titulo)
         self.layout_principal.addWidget(self.pestañas)
-        self.layout_principal.addWidget(self.btn_seguir)
         self.setLayout(self.layout_principal)
-    
-    def err_columna(self, col):
-
-        df = Leer_Datos.abrir_csv()
-        if col in df.columns:
-            df, datos = Analisis.cadena_a_numero(df, cols=[col], modo='columna')
-            return df, datos
-    
-    def transf_columna(self, col):
-        pass
-
-
 
     def cargar_dataframe(self, df, muestra_df: QTableWidget):
         """Carga un DataFrame en la tabla"""
@@ -381,24 +365,25 @@ class PaginaEDA(QWidget):
     
     def crear_pest(self, nom: str):
         pestaña = QWidget()
-
         layout_pest = QHBoxLayout()
-
         layout_izq = QVBoxLayout()
-
         form_layout = QHBoxLayout()
-
         form_cols = QComboBox()
+        df_layout = QVBoxLayout()
+        df_label = QLabel()
+        muestra_df = QTableWidget()
+
         df = Leer_Datos.abrir_csv()
         if nom == 'num':
             columnas = [col for col in df.columns if df[col].dtype == 'object' and col != 'hospitalizacion']
             form_cols.addItems(['Elige una columna'] + columnas)
+            df_label.setText("Columna transformada")
         elif nom == 'err':
-            df_num = Analisis.cadena_a_numero(df)
+            df_num = Analisis.cadena_a_numero()
             columnas = [col for col in df_num.columns if col != 'id']
             form_cols.addItems(['Elige una columna'] + columnas)
+            df_label.setText("DataFrame libre de errores")
 
-        muestra_df = QTableWidget()
 
         llamadas = {"num":"Textos.transf_num()",
                     "err":"Textos.trat_err()"}
@@ -424,17 +409,15 @@ class PaginaEDA(QWidget):
         def boton_transf():
             col = form_cols.currentText()
             if col != 'Elige una columna':
-                df = Leer_Datos.abrir_csv()
                 info = Info.info_datos_num(col)
                 caja_texto.setText(eval(llamadas['num']) + info)
-                df_num, datos = Analisis.cadena_a_numero(df=df, cols=[col], modo='columna')
+                df_num, datos = Analisis.cadena_a_numero(cols=[col], modo='columna')
                 self.cargar_dataframe(df_num, muestra_df)
 
         def boton_err():
             col = form_cols.currentText()
             if col != 'Elige una columna':
-                df = Leer_Datos.abrir_csv()
-                df_num = Analisis.cadena_a_numero(df=df, modo='num')
+                df_num = Analisis.cadena_a_numero(modo='num')
                 df_err = Analisis.limpiar_errores(df=df_num)
                 self.cargar_dataframe(df_err, muestra_df)
                 info = Info.info_datos_noerr(col)
@@ -449,14 +432,15 @@ class PaginaEDA(QWidget):
             btn_arreglar.clicked.connect(boton_err)
 
 
-        form_layout.addStretch()
         form_layout.addWidget(form_cols)
         form_layout.addWidget(btn_arreglar)
         form_layout.addStretch()
         layout_izq.addLayout(form_layout)
         layout_izq.addLayout(doc_layout)
         layout_pest.addLayout(layout_izq)
-        layout_pest.addWidget(muestra_df)
+        df_layout.addWidget(df_label)
+        df_layout.addWidget(muestra_df)
+        layout_pest.addLayout(df_layout)
         if nom == 'num':
             layout_pest.setStretch(0,9)
             layout_pest.setStretch(1,1)
@@ -467,6 +451,89 @@ class PaginaEDA(QWidget):
 
         return pestaña
     
+    def crear_pest_graf(self):
+        pestaña = QWidget()
+        layout_pest = QVBoxLayout()
+        layout_form = QHBoxLayout()
+        form_cols = QComboBox()
+        btn_mostrar = QPushButton('Generar gráfica')
+        figura = Figure()
+        area_graf = FigureCanvas(figura)
+
+        df_num = Analisis.cadena_a_numero()
+        columnas = [col for col in df_num.columns if col != 'id']
+        form_cols.addItems(['Elige una columna'] + columnas)
+
+        def btn_graf():
+            col =  form_cols.currentText()
+            if col != 'Elige una columna' and col != 'hospitalizacion':
+                df_err = Analisis.limpiar_errores(df=df_num, cols=col, modo='columna')
+                generar_grafica(df_err[0], col)
+            elif col == 'hospitalizacion':
+                df_err = df_num['hospitalizacion']
+                generar_grafica(df_err, col)
+
+        btn_mostrar.clicked.connect(btn_graf)
+
+        btn_seguir = QPushButton("Ir a creación del modelo ➢")
+        btn_seguir.setFont(QFont("Eras Medium ITC", 12))
+        btn_seguir.setMinimumHeight(40)
+        btn_seguir.clicked.connect(self.ir_a_modelo)
+        btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
+
+    
+        def generar_grafica(df_col, col):
+            import seaborn as sns
+            import pandas as pd
+            # Limpiar figura anterior
+            figura.clear()
+
+            if col != 'hospitalizacion':            
+                df_col = pd.DataFrame(df_col)
+                df_col = df_col.sort_values(col)
+                df_col = df_col.reset_index(drop=True)
+
+                # Recibir datos de la columna indicada
+                y = df_col
+
+                # Crear subplot
+                ax = figura.add_subplot(111)
+                
+                # Configurar estilo de seaborn
+                sns.set_style("whitegrid")
+                
+                # Crear gráfica de línea
+                ax.plot(y)
+
+                ax.set_xlabel('Entradas')
+                ax.set_ylabel(col)
+
+            else:
+                ax =figura.add_subplot(111)
+                conteo = df_col.value_counts()
+
+                ax.bar(conteo.index, conteo.values)
+                ax.set_xlabel(col)
+                ax.set_ylabel('Entradas')
+
+
+            
+            ax.set_title('Distribución de los datos')
+            
+            # Actualizar canvas
+            area_graf.draw()
+
+        layout_form.addWidget(form_cols)
+        layout_form.addWidget(btn_mostrar)
+        layout_form.addStretch(7)
+        layout_pest.addLayout(layout_form)
+        layout_pest.addWidget(area_graf)
+        layout_pest.addWidget(btn_seguir)
+        pestaña.setLayout(layout_pest)
+
+        return pestaña
+
+
     def ir_a_modelo(self):
         self.widget_apilado.setCurrentIndex(3)
 
@@ -537,7 +604,7 @@ class InformeGraficos(QWidget):
         label.setFont(QFont("Arial", 16))
         label.setAlignment(Qt.AlignCenter)
         layout.addWidget(label)
-        self.btn_seguir = QPushButton("Volver a creación de la base de datos ⮌")
+        self.btn_seguir = QPushButton("Volver al inicio ⮌")
         self.btn_seguir.setFont(QFont("Eras Medium ITC", 12))
         self.btn_seguir.setMinimumHeight(40)
         self.btn_seguir.clicked.connect(self.ir_a_datos)
@@ -546,7 +613,7 @@ class InformeGraficos(QWidget):
         self.setLayout(layout)
 
     def ir_a_datos(self):
-        self.widget_apilado.setCurrentIndex(1)
+        self.widget_apilado.setCurrentIndex(0)
 
 class VentanaPrincipal(QMainWindow):
     """Ventana principal de la aplicación"""

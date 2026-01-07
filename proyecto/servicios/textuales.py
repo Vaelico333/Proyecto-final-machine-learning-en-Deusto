@@ -63,6 +63,21 @@ A continuación, se muestra un recuento de los errores en la columna seleccionad
 '''
         return texto
     
+    def modelo_reglog():
+        texto = ''' Modelo Regresión Logística
+'''
+        return texto
+
+    def modelo_bosque():
+        texto = ''' Modelo Bosque Aleatorio
+'''
+        return texto
+
+    def modelo_xgb():
+        texto = ''' Modelo Aumento Extremo del Gradiente
+'''
+        return texto
+    
 class Info:
     import pandas as pd
     def extraer_info(info: list) -> list:

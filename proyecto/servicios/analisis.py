@@ -45,10 +45,10 @@ class Analisis():
         """
         Ejecuta la operación u operaciones contenidas en args sobre num.
         
-        :param num: Número sobre el que realizar la conversión
+        :param num: Número sobre el que realizar la conversión.
         :type num: float
-        :param args: Conjunto de operaciones a aplicar, en forma de strings con operador+número sin espacios
-        :return: Devuelve num convertido a la nueva unidad de medida
+        :param args: Conjunto de operaciones a aplicar, en forma de strings con operador+número, separando cada operación de la siguiente con un espacio.
+        :return: Devuelve num convertido a la nueva unidad de medida.
         :rtype: float
         """
         import operator
@@ -70,19 +70,19 @@ class Analisis():
             num = operadores[operacion](num, float(numero))
         return num
 
-    def cadena_a_numero(df: pd.DataFrame=pd.DataFrame(), cols: list = None, modo: str = 'num') -> pd.DataFrame:
+    def cadena_a_numero(df: pd.DataFrame = pd.DataFrame(), cols: list = None, modo: str = 'num') -> pd.DataFrame:
         """
         Convierte las columnas con medidas de cadena de caracteres a número de coma flotante, 
         elimina el nombre de la unidad y 
         homogeneiza los datos convirtiendo a las unidades estándar.
         
-        :param df: DataFrame de pandas a modificar
+        :param df: DataFrame de pandas a modificar.
         :type df: DataFrame
-        :param col: Nombre de las columnas a transformar
+        :param col: Nombre de las columnas a transformar.
         :type col: tuple
-        :param modo: Indica qué se retornará: todos los datos (total), sólo la columna (columna) o sólo los nuevos datos (num)
+        :param modo: Indica qué se retornará: todos los datos (total), sólo la columna (columna) o sólo los nuevos datos (num).
         :type modo: str
-        :return: DataFrame modificado
+        :return: DataFrame modificado.
         :rtype: DataFrame
         """
         import pandas as pd
@@ -179,7 +179,7 @@ class Analisis():
                             
                   
     
-    def limpiar_errores(df: pd.DataFrame, cols: str = None, modo: str = 'total') -> pd.DataFrame:
+    def limpiar_errores(df: pd.DataFrame = pd.DataFrame(), cols: str = None, modo: str = 'total') -> pd.DataFrame | tuple[pd.DataFrame, tuple[int, int, int]]:
         """
         Docstring for limpiar_errores
         
@@ -193,6 +193,8 @@ class Analisis():
         :rtype: DataFrame
         """
 
+        if df.empty:
+            df = Analisis.cadena_a_numero()
         if not cols:
             for col in df.columns:
                 if df[col].dtype == float or df[col].dtype == int: # Si el dtype es numérico, evitamos modificar hospitalización
@@ -214,13 +216,3 @@ class Analisis():
             df.loc[df[cols] < 0, cols] *= -1 # Si el dato es negativo, lo volvemos positivo
             return df[cols], (num_nan[cols], num_cero, num_neg)
 
-'''class Graficas():
-
-    def '''
-'''import pandas as pd
-df = Leer_Datos.abrir_csv()
-df = Analisis.cadena_a_numero(df, modo='num')
-print(df)
-'''#df = pd.DataFrame(df)
-#limpieza = Analisis.limpiar_errores(df=df[0], cols='peso_kg', modo='columna')
-#print(type(limpieza[0]))

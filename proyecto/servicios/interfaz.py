@@ -58,9 +58,12 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from servicios.acciones import *
+from servicios.textuales import *
 from servicios.generador_datos import *
 from servicios.analisis import *
+from servicios.modelos import *
+from servicios.graficos import *
+from servicios.trabajador import Trabajador
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
@@ -86,6 +89,14 @@ class PaginaBienvenida(QWidget):
         self.etiqueta_titulo.setFrameShadow(QFrame.Raised)
         self.etiqueta_titulo.setLineWidth(5)
         self.etiqueta_titulo.setAlignment(Qt.AlignCenter)
+
+        '''# Botón modo oscuro
+        self.btn_oscuro = QPushButton()
+        self.btn_oscuro.setCheckable(True)
+        if self.btn_oscuro.isChecked():
+            VentanaPrincipal().widget_apilado.setPalette(VentanaPrincipal().paleta_oscura)
+        else:
+            VentanaPrincipal().widget_apilado.setPalette(VentanaPrincipal().paleta_basica)'''
         
         # Cuadro de texto 
         self.caja_texto = QLabel(Textos.bienvenida())
@@ -113,6 +124,7 @@ class PaginaBienvenida(QWidget):
 
         # Añadimos los widgets al layout
         self.layout_principal.addWidget(self.etiqueta_titulo)
+        #self.layout_principal.addWidget(self.btn_oscuro)
         self.layout_principal.addSpacing(30)
         self.layout_principal.addWidget(self.area_texto)
         self.layout_principal.addSpacing(30)
@@ -364,6 +376,7 @@ class PaginaEDA(QWidget):
         return muestra_df
     
     def crear_pest(self, nom: str):
+
         pestaña = QWidget()
         layout_pest = QHBoxLayout()
         layout_izq = QVBoxLayout()
@@ -372,6 +385,10 @@ class PaginaEDA(QWidget):
         df_layout = QVBoxLayout()
         df_label = QLabel()
         muestra_df = QTableWidget()
+        caja_texto = QLabel()
+        area_doc = QScrollArea()
+        doc_layout = QHBoxLayout()
+        btn_arreglar = QPushButton()
 
         df = Leer_Datos.abrir_csv()
         if nom == 'num':
@@ -385,10 +402,10 @@ class PaginaEDA(QWidget):
             df_label.setText("DataFrame libre de errores")
 
 
-        llamadas = {"num":"Textos.transf_num()",
+        switch = {"num":"Textos.transf_num()",
                     "err":"Textos.trat_err()"}
 
-        caja_texto = QLabel(eval(llamadas[nom]))
+        caja_texto.setText(eval(switch[nom]))
         caja_texto.setWordWrap(True)
         caja_texto.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         caja_texto.setFont(QFont("Noto Serif", 14))
@@ -396,21 +413,19 @@ class PaginaEDA(QWidget):
                                       "background-color:#777777;"
                                       "color:#ffffff;")
 
-        area_doc = QScrollArea()
         area_doc.setWidgetResizable(True)
         area_doc.setWidget(caja_texto)
         area_doc.setFrameShape(QFrame.Box)
         area_doc.setFrameShadow(QFrame.Raised)
         area_doc.setLineWidth(4)
 
-        doc_layout = QHBoxLayout()
         doc_layout.addWidget(area_doc)
 
         def boton_transf():
             col = form_cols.currentText()
             if col != 'Elige una columna':
                 info = Info.info_datos_num(col)
-                caja_texto.setText(eval(llamadas['num']) + info)
+                caja_texto.setText(eval(switch['num']) + info)
                 df_num, datos = Analisis.cadena_a_numero(cols=[col], modo='columna')
                 self.cargar_dataframe(df_num, muestra_df)
 
@@ -421,14 +436,14 @@ class PaginaEDA(QWidget):
                 df_err = Analisis.limpiar_errores(df=df_num)
                 self.cargar_dataframe(df_err, muestra_df)
                 info = Info.info_datos_noerr(col)
-                caja_texto.setText(eval(llamadas['err']) + info)
+                caja_texto.setText(eval(switch['err']) + info)
 
         if nom == 'num':
-            btn_arreglar = QPushButton(u"Transformar datos")
+            btn_arreglar.setText(u"Transformar datos")
             btn_arreglar.clicked.connect(boton_transf)
 
         elif nom == 'err':
-            btn_arreglar = QPushButton(u"Eliminar errores")
+            btn_arreglar.setText(u"Eliminar errores")
             btn_arreglar.clicked.connect(boton_err)
 
 
@@ -452,6 +467,8 @@ class PaginaEDA(QWidget):
         return pestaña
     
     def crear_pest_graf(self):
+
+        # Creamos todos los widgets y layouts
         pestaña = QWidget()
         layout_pest = QVBoxLayout()
         layout_form = QHBoxLayout()
@@ -459,6 +476,7 @@ class PaginaEDA(QWidget):
         btn_mostrar = QPushButton('Generar gráfica')
         figura = Figure()
         area_graf = FigureCanvas(figura)
+        btn_seguir = QPushButton("Ir a creación del modelo ➢")
 
         df_num = Analisis.cadena_a_numero()
         columnas = [col for col in df_num.columns if col != 'id']
@@ -466,61 +484,28 @@ class PaginaEDA(QWidget):
 
         def btn_graf():
             col =  form_cols.currentText()
-            if col != 'Elige una columna' and col != 'hospitalizacion':
-                df_err = Analisis.limpiar_errores(df=df_num, cols=col, modo='columna')
-                generar_grafica(df_err[0], col)
-            elif col == 'hospitalizacion':
-                df_err = df_num['hospitalizacion']
-                generar_grafica(df_err, col)
+            if col != 'Elige una columna':
+                generar_grafica(col)
 
         btn_mostrar.clicked.connect(btn_graf)
 
-        btn_seguir = QPushButton("Ir a creación del modelo ➢")
         btn_seguir.setFont(QFont("Eras Medium ITC", 12))
         btn_seguir.setMinimumHeight(40)
         btn_seguir.clicked.connect(self.ir_a_modelo)
         btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
 
     
-        def generar_grafica(df_col, col):
-            import seaborn as sns
+        def generar_grafica(col):
             import pandas as pd
-            # Limpiar figura anterior
+            # Limpiamos figura anterior
             figura.clear()
 
-            if col != 'hospitalizacion':            
-                df_col = pd.DataFrame(df_col)
-                df_col = df_col.sort_values(col)
-                df_col = df_col.reset_index(drop=True)
-
-                # Recibir datos de la columna indicada
-                y = df_col
-
-                # Crear subplot
-                ax = figura.add_subplot(111)
-                
-                # Configurar estilo de seaborn
-                sns.set_style("whitegrid")
-                
-                # Crear gráfica de línea
-                ax.plot(y)
-
-                ax.set_xlabel('Entradas')
-                ax.set_ylabel(col)
-
+            if col != 'hospitalizacion':
+                Eda.cols_num(figura, col)
             else:
-                ax =figura.add_subplot(111)
-                conteo = df_col.value_counts()
+                Eda.col_hosp(figura)
 
-                ax.bar(conteo.index, conteo.values)
-                ax.set_xlabel(col)
-                ax.set_ylabel('Entradas')
-
-
-            
-            ax.set_title('Distribución de los datos')
-            
-            # Actualizar canvas
+            # Actualizamos el lienzo
             area_graf.draw()
 
         layout_form.addWidget(form_cols)
@@ -539,27 +524,191 @@ class PaginaEDA(QWidget):
 
 class CreacionModelo(QWidget):
     """Página de creación del modelo"""
-    def __init__(self):
-        super().__init__()
+        
     def __init__(self, widget_apilado):
         super().__init__()
         self.widget_apilado = widget_apilado
+        self.threadpools = dict()
         self.init_ui()
 
     def init_ui(self):
-        layout = QVBoxLayout()
-        label = QLabel("Página de creación del modelo")
-        label.setFont(QFont("Arial", 16))
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
-        self.btn_seguir = QPushButton("Ir a evaluación del modelo ➢")
-        self.btn_seguir.setFont(QFont("Eras Medium ITC", 12))
-        self.btn_seguir.setMinimumHeight(40)
-        self.btn_seguir.clicked.connect(self.ir_a_evaluacion)
-        self.btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
-        layout.addWidget(self.btn_seguir)
-        self.setLayout(layout)
 
+        self.layout_principal = QVBoxLayout()
+
+        self.etiqueta_titulo = QLabel("Selección del modelo")
+        self.etiqueta_titulo.setGeometry(QRect(165, 50, 850, 100))
+        self.fuente_titulo = QFont("OCR A Extended", 72, 50)
+        self.etiqueta_titulo.setFont(self.fuente_titulo)
+        self.etiqueta_titulo.setStyleSheet(u"background-color: rgb(0, 255, 255);""")
+        self.etiqueta_titulo.setFrameShape(QFrame.Panel)
+        self.etiqueta_titulo.setFrameShadow(QFrame.Raised)
+        self.etiqueta_titulo.setLineWidth(5)
+        self.etiqueta_titulo.setAlignment(Qt.AlignCenter)
+
+        self.pestañas = QTabWidget()
+        self.reglog = self.crear_pest("reglog")
+        self.bosque = self.crear_pest("bosque")
+        self.xgb = self.crear_pest("xgb")
+        self.pestañas.addTab(self.reglog, u"Regresión Logística")
+        self.pestañas.addTab(self.bosque, u"Bosque aleatorio")
+        self.pestañas.addTab(self.xgb, u"Aumento Extremo del Gradiente")
+
+        self.layout_principal.addWidget(self.etiqueta_titulo)
+        self.layout_principal.addWidget(self.pestañas)
+        self.setLayout(self.layout_principal)
+
+    def crear_pest(self, nom: str):
+
+        self.threadpools[nom] = QThreadPool()
+        pestaña = QWidget()
+        layout_pest = QHBoxLayout()
+        layout_izq = QVBoxLayout()
+        params_layout = QHBoxLayout()
+        btn_layout = QHBoxLayout()
+        form_layout = QVBoxLayout()
+        modelo_layout = QVBoxLayout()
+        modelo_label = QLabel()
+        figura = Figure()
+        repr_modelo = FigureCanvas(figura)
+        caja_texto = QLabel()
+        area_doc = QScrollArea()
+        doc_layout = QHBoxLayout()
+        btn_crear = QPushButton()
+        btn_optim = QPushButton()
+        btn_seguir = QPushButton("Continuar con este modelo ➢")
+
+        btn_seguir.setHidden(True)
+        btn_seguir.setFont(QFont("Eras Medium ITC", 12))
+        btn_seguir.setMinimumHeight(40)
+        btn_seguir.clicked.connect(self.ir_a_evaluacion)
+        btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
+
+        btn_crear.setStyleSheet(u"background-color: #68c5d8;")
+
+        btn_optim.setStyleSheet(u"background-color: #68c5d8;")
+        btn_optim.setText(u"Crear modelo optimizado con RSCV")
+
+        params_layout, parametros = self.crear_combos(params_layout, nom)
+
+        switch = {"reglog":"Textos.modelo_reglog()",
+                    "bosque":"Textos.modelo_bosque()",
+                    "xgb":"Textos.modelo_xgb()"}
+
+        caja_texto.setText(eval(switch[nom]))
+        caja_texto.setWordWrap(True)
+        caja_texto.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        caja_texto.setFont(QFont("Noto Serif", 14))
+        caja_texto.setStyleSheet(u"padding: 15px;"
+                                      "background-color:#777777;"
+                                      "color:#ffffff;")
+
+        area_doc.setWidgetResizable(True)
+        area_doc.setWidget(caja_texto)
+        area_doc.setFrameShape(QFrame.Box)
+        area_doc.setFrameShadow(QFrame.Raised)
+        area_doc.setLineWidth(4)
+
+        doc_layout.addWidget(area_doc)
+
+        def boton_modelo(nom: str, gscv: bool = False):
+            if gscv:
+                btn_optim.setEnabled(False)
+                self.setCursor(Qt.WaitCursor)
+                btn_optim.setStyleSheet(u"background-color: #00b300;")
+                btn_crear.setStyleSheet(u"background-color: #68c5d8;")
+                print('creando modelo gscv')
+                #Modelo.gs_cv(nom)
+                btn_optim.setEnabled(True)
+                self.unsetCursor()
+            else:
+                btn_crear.setEnabled(False)
+                self.setCursor(Qt.WaitCursor)
+                btn_crear.setStyleSheet(u"background-color: #00b300;")
+                btn_optim.setStyleSheet(u"background-color: #68c5d8;")
+                btn_crear.setEnabled(False)
+
+                params = []
+                for k, v in parametros.items():
+                    params.append(v.currentText())
+                
+                if nom == 'reglog':
+                    trabajador = Trabajador(Modelo.reglog, *params)
+                elif nom == 'bosque':
+                    trabajador = Trabajador(Modelo.bosque, *params)
+                elif nom == 'xgb':
+                    trabajador = Trabajador(Modelo.xgb, *params)
+
+                trabajador.señales.terminado.connect(terminar_entrenamiento)
+                trabajador.señales.error.connect(error_entrenamiento)
+
+                self.threadpools[nom].start(trabajador)
+
+        if nom == 'reglog':
+            modelo_label.setText("Modelo de Regresión Logística")
+            btn_crear.setText(u"Crear modelo de Regresión Logística")
+            btn_crear.clicked.connect(lambda: boton_modelo(nom))
+
+            btn_optim.clicked.connect(lambda: boton_modelo(nom, True))
+
+        elif nom == 'bosque':
+            btn_crear.setText(u"Crear modelo de Bosque Aleatorio")
+            btn_crear.clicked.connect(lambda: boton_modelo(nom))
+
+            btn_optim.clicked.connect(lambda: boton_modelo(nom, True))
+
+        elif nom == 'xgb':
+            btn_crear.setText(u"Crear modelo XGB")
+            btn_crear.clicked.connect(lambda: boton_modelo(nom))
+
+            btn_optim.clicked.connect(lambda: boton_modelo(nom, True))
+
+        def terminar_entrenamiento(modelo):
+            self.modelo_actual = modelo
+            # Dibujar gráfica
+            btn_seguir.setHidden(False)
+            btn_crear.setEnabled(True)
+            self.unsetCursor()
+        
+        def error_entrenamiento(mensaje):
+            QMessageBox.critical(self, 'Error de entrenamiento: ', mensaje)
+
+        btn_layout.addStretch()
+        btn_layout.addWidget(btn_crear)
+        btn_layout.addWidget(btn_optim)
+        btn_layout.addStretch()
+        form_layout.addLayout(params_layout)
+        form_layout.addLayout(btn_layout)
+        layout_izq.addLayout(form_layout)
+        layout_izq.addLayout(doc_layout)
+        layout_pest.addLayout(layout_izq)
+        modelo_layout.addWidget(modelo_label)
+        modelo_layout.addWidget(repr_modelo)
+        modelo_layout.addWidget(btn_seguir)
+        layout_pest.addLayout(modelo_layout)
+        layout_pest.setStretch(0,58)
+        layout_pest.setStretch(1,42)
+        pestaña.setLayout(layout_pest)
+
+        return pestaña
+    
+    def crear_combos(self, params_layout, nom):
+        params = Modelo.params(nom)
+        parametros = {}
+        params_layout.addStretch()
+        for k, v in params.items():
+            form_layout = QVBoxLayout()
+            titulo = QLabel(k.capitalize())
+
+            combo = QComboBox()
+            combo.addItems(v)
+            parametros[k] = combo
+
+            form_layout.addWidget(titulo)
+            form_layout.addWidget(combo)
+            params_layout.addLayout(form_layout)
+        params_layout.addStretch()
+        return params_layout, parametros
+    
     def ir_a_evaluacion(self):
         self.widget_apilado.setCurrentIndex(4)
 
@@ -648,7 +797,7 @@ class VentanaPrincipal(QMainWindow):
         self.widget_apilado.setCurrentIndex(0)
 
         # Paleta de colores 
-        paleta_basica = QPalette()
+        self.paleta_basica = QPalette()
         pinceles = {}
         valores = [(0, 0, 0, 255),(168, 38, 38, 255),(255, 255, 255, 255),
                    (217, 216, 216, 255),(89, 89, 89, 255),(119, 119, 119, 255),
@@ -673,9 +822,9 @@ class VentanaPrincipal(QMainWindow):
         # Y aplicamos cada pincel a la paleta:
         for estado in pinceles_paleta.keys():
             for parte in pinceles_paleta[estado].keys():
-                eval(f'paleta_basica.setBrush(QPalette.{estado}, QPalette.{parte}, QBrush(QColor(*valores[{pinceles_paleta[estado][parte]}]), Qt.SolidPattern))')
+                eval(f'self.paleta_basica.setBrush(QPalette.{estado}, QPalette.{parte}, QBrush(QColor(*valores[{pinceles_paleta[estado][parte]}]), Qt.SolidPattern))')
 
-        self.widget_apilado.setPalette(paleta_basica)
+        self.widget_apilado.setPalette(self.paleta_basica)
 
 
 def main():

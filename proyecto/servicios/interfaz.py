@@ -63,7 +63,7 @@ from servicios.generador_datos import *
 from servicios.analisis import *
 from servicios.modelos import *
 from servicios.graficos import *
-from servicios.trabajador import Trabajador
+from servicios.trabajador import Trabajador, ControlEntrenamiento
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
@@ -496,10 +496,10 @@ class PaginaEDA(QWidget):
 
     
         def generar_grafica(col):
-            import pandas as pd
             # Limpiamos figura anterior
             figura.clear()
 
+            # Hacemos llamada según la columna
             if col != 'hospitalizacion':
                 Eda.cols_num(figura, col)
             else:
@@ -552,6 +552,7 @@ class CreacionModelo(QWidget):
         self.pestañas.addTab(self.reglog, u"Regresión Logística")
         self.pestañas.addTab(self.bosque, u"Bosque aleatorio")
         self.pestañas.addTab(self.xgb, u"Aumento Extremo del Gradiente")
+        self.modelos = {}
 
         self.layout_principal.addWidget(self.etiqueta_titulo)
         self.layout_principal.addWidget(self.pestañas)
@@ -568,6 +569,7 @@ class CreacionModelo(QWidget):
         form_layout = QVBoxLayout()
         modelo_layout = QVBoxLayout()
         modelo_label = QLabel()
+        barra_progreso = QProgressBar()
         figura = Figure()
         repr_modelo = FigureCanvas(figura)
         caja_texto = QLabel()
@@ -577,9 +579,12 @@ class CreacionModelo(QWidget):
         btn_optim = QPushButton()
         btn_seguir = QPushButton("Continuar con este modelo ➢")
 
+        barra_progreso.setHidden(True)
+
         btn_seguir.setHidden(True)
         btn_seguir.setFont(QFont("Eras Medium ITC", 12))
         btn_seguir.setMinimumHeight(40)
+        btn_seguir.clicked.connect(lambda: print(self.modelos))
         btn_seguir.clicked.connect(self.ir_a_evaluacion)
         btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
 
@@ -610,19 +615,29 @@ class CreacionModelo(QWidget):
 
         doc_layout.addWidget(area_doc)
 
-        def boton_modelo(nom: str, gscv: bool = False):
-            if gscv:
+        control_entrenamiento = ControlEntrenamiento()
+
+
+        def boton_modelo(nom: str, rscv: bool = False):
+            barra_progreso.setHidden(False)
+            barra_progreso.setValue(0)
+
+            if rscv:
                 btn_optim.setEnabled(False)
-                self.setCursor(Qt.WaitCursor)
                 btn_optim.setStyleSheet(u"background-color: #00b300;")
                 btn_crear.setStyleSheet(u"background-color: #68c5d8;")
                 print('creando modelo gscv')
-                #Modelo.gs_cv(nom)
+                trabajador = Trabajador(Modelo.gs_cv, nom, objeto_control=control_entrenamiento)
+
+                trabajador.señales.progreso.connect(barra_progreso.setValue)
+                trabajador.señales.terminado.connect(terminar_entrenamiento)
+                trabajador.señales.error.connect(error_entrenamiento)
+
+                self.threadpools[nom].start(trabajador)
                 btn_optim.setEnabled(True)
-                self.unsetCursor()
+
             else:
                 btn_crear.setEnabled(False)
-                self.setCursor(Qt.WaitCursor)
                 btn_crear.setStyleSheet(u"background-color: #00b300;")
                 btn_optim.setStyleSheet(u"background-color: #68c5d8;")
                 btn_crear.setEnabled(False)
@@ -632,12 +647,19 @@ class CreacionModelo(QWidget):
                     params.append(v.currentText())
                 
                 if nom == 'reglog':
-                    trabajador = Trabajador(Modelo.reglog, *params)
-                elif nom == 'bosque':
-                    trabajador = Trabajador(Modelo.bosque, *params)
-                elif nom == 'xgb':
-                    trabajador = Trabajador(Modelo.xgb, *params)
+                    control_entrenamiento.total_pasos = int(parametros['max_iter'].currentText())
+                    trabajador = Trabajador(Modelo.reglog, params, objeto_control=control_entrenamiento)
+                    trabajador.señales.progreso.connect(barra_progreso.setValue)
 
+                elif nom == 'bosque':
+                    control_entrenamiento.total_pasos = int(parametros['n_estimators'].currentText())
+                    trabajador = Trabajador(Modelo.bosque, *params, objeto_control=control_entrenamiento)
+
+                elif nom == 'xgb':
+                    control_entrenamiento.total_pasos = int(parametros['n_estimators'].currentText())
+                    trabajador = Trabajador(Modelo.xgb, *params, objeto_control=control_entrenamiento)
+
+                trabajador.señales.progreso.connect(barra_progreso.setValue)
                 trabajador.señales.terminado.connect(terminar_entrenamiento)
                 trabajador.señales.error.connect(error_entrenamiento)
 
@@ -651,26 +673,47 @@ class CreacionModelo(QWidget):
             btn_optim.clicked.connect(lambda: boton_modelo(nom, True))
 
         elif nom == 'bosque':
+            modelo_label.setText("Modelo de Bosque Aleatorio")
             btn_crear.setText(u"Crear modelo de Bosque Aleatorio")
             btn_crear.clicked.connect(lambda: boton_modelo(nom))
 
             btn_optim.clicked.connect(lambda: boton_modelo(nom, True))
 
         elif nom == 'xgb':
+            modelo_label.setText("Modelo de Incremento Extremo del Gradiente")
             btn_crear.setText(u"Crear modelo XGB")
             btn_crear.clicked.connect(lambda: boton_modelo(nom))
 
             btn_optim.clicked.connect(lambda: boton_modelo(nom, True))
 
+        def generar_grafica(modelo, X, y):
+            # Limpiamos figura anterior
+            figura.clear()
+            ax = figura.add_subplot(111)
+
+            y_pred = modelo.predict(X)
+            GrafModelo.graf_reglog(y, y_pred, ax)
+
+
+            # Actualizamos el lienzo
+            repr_modelo.draw()
+
+
         def terminar_entrenamiento(modelo):
-            self.modelo_actual = modelo
-            # Dibujar gráfica
+            self.modelos[nom] = modelo['modelo']
+            print(self.modelos)
+            X_test = modelo['X_test']
+            y_test = modelo['y_test']
+
+            generar_grafica(self.modelos[nom], X_test, y_test)
+
             btn_seguir.setHidden(False)
             btn_crear.setEnabled(True)
-            self.unsetCursor()
+            barra_progreso.setHidden(True)
         
         def error_entrenamiento(mensaje):
             QMessageBox.critical(self, 'Error de entrenamiento: ', mensaje)
+            barra_progreso.setHidden(True)
 
         btn_layout.addStretch()
         btn_layout.addWidget(btn_crear)
@@ -681,8 +724,9 @@ class CreacionModelo(QWidget):
         layout_izq.addLayout(form_layout)
         layout_izq.addLayout(doc_layout)
         layout_pest.addLayout(layout_izq)
-        modelo_layout.addWidget(modelo_label)
-        modelo_layout.addWidget(repr_modelo)
+        modelo_layout.addWidget(modelo_label, stretch=1)
+        modelo_layout.addWidget(barra_progreso)
+        modelo_layout.addWidget(repr_modelo, stretch=9)
         modelo_layout.addWidget(btn_seguir)
         layout_pest.addLayout(modelo_layout)
         layout_pest.setStretch(0,58)

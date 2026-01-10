@@ -50,10 +50,20 @@ class Eda:
         return ax
     
 class GrafModelo:
-    def graf_reglog():
-        pass
-
+    def graf_reglog(y_test, y_pred, ax):
+        import seaborn as sns
+        
+        sns.scatterplot(x=y_test, y=y_pred, ax=ax)
+        sns.lineplot(x=y_test, y=y_pred, color='red', ax=ax)
+        ax.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='green')
+        ax.set_xlabel('Datos reales')
+        ax.set_ylabel('Datos predichos')
+        ax.set_title('Regresión logística de hospitalización de pacientes')
+        
+        return ax
+    
     def graf_bosque():
+
         pass
 
     def graf_xgb():

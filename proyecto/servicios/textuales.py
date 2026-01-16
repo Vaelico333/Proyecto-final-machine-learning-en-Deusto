@@ -64,12 +64,45 @@ A continuación, se muestra un recuento de los errores en la columna seleccionad
         return texto
     
     def modelo_reglog():
-        texto = ''' Modelo Regresión Logística
+        ecuacion_logit = u"ln(P / (1 - P)) = β₀ + β₁X₁ + ... + βₙXₙ" 
+        ecuacion_sigmoide = u"P = 1 / (1 + e^-(β₀ + β₁X₁ + ... + βₙXₙ))"
+        texto = f'''Modelo de Regresión Logística.
+Este es el modelo más sencillo que vamos a crear. No es el más recomendado, pero es un buen comienzo para empezar a analizar y entender nuestros datos.
+Es un modelo basado en la función logística o sigmoide, que transforma una combinación lineal de variables en una probabilidad.
+La ecuación del modelo se crea al igualar la ecuación Logit a una combinación lineal de los predictores (X):
+{ecuacion_logit}
+
+Finalmente, obtenemos la probabilidad directa (P) a partir de la ecuación anterior.
+Para ello, se despeja la fórmula resultando en la función logística o inversa del logit:
+{ecuacion_sigmoide}
+
+Con esto, obtenemos un rango de probabilidad entre 0 y 1, y nuestro modelo intentará asignar una de las dos categorías objetivo a cada entrada (sí o no).
+Como podemos ver en la gráfica de la derecha, el ajuste a los datos reales bastante bajo.
+
+En la página siguiente veremos los datos de evaluación del modelo.
+
+Parámetros:
+- Penalty: es la regularización que se aplica al modelo, que castiga los coeficientes demasiado grandes para evitar el overfitting. Opciones:
+    · "l2": la llamada técnica "Ridge", es la predeterminada, y penaliza la suma de los cuadrados de los coeficientes.
+    · "l1": conocida como "Lasso", penaliza el valor absoluto de los coeficientes, pudiendo llevar algunos valores a 0, y actuando así como una herramienta de selección de variables.
+    · "elasticnet": es una combinación de las dos anteriores.
+    · "None": no aplica ninguna regularización
+- C: controla cómo de fuerte es la penalización aplicada. Consiste en un número de tipo "float" positivo.
+    · Valor bajo: presentará una regularización fuerte. Se evita el overfitting, pero el modelo podría perder capacidad de ajuste.
+    · Valor alto: regularización débil, que permite mayor ajuste a los datos de entrenamiento, y perjudicando la capacidad predictiva del modelo.
+- Solver: se trata del algoritmo que encuentra los mejores coeficientes para el modelo y minimiza la función de pérdida. Las opciones son:
+    · "newton-cg": o Newton Conjugate Gradient, usa información de la curvatura de la función de pérdida para encontrar el mínimo. Soporta nativamente la clasificación de más de dos clases. Sólo es compatible con regularización l2 o ninguna. Es bastante robusto, y converge en menos iteraciones que otros métodos, aunque cada iteración es más costosa. Se recomienda usarlo  cuando el tamaño de los datos es de pequeño a mediano.
+    · "liblinear": 
+    · "saga"
+- Max iter
 '''
         return texto
 
     def modelo_bosque():
-        texto = ''' Modelo Bosque Aleatorio
+        texto = ''' Modelo de Bosque Aleatorio.
+Es el modelo más típicamente usado para este tipo de problema, y el que se recomendó en la documentación del proyecto.
+Se trata de un modelo de aprendizaje supervisado que combina varios árboles de decisión (los que se definan en el parámetro "n_estimators") para obtener un resultado más consistente y preciso.
+
 '''
         return texto
 

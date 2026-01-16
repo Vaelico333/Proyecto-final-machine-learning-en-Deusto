@@ -54,7 +54,7 @@ class Modelo():
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
-        penalty = args[0][0]
+        penalty = args[0][0] if args[0][0] != 'None' else None
         C = float(args[0][1])
         solver = args[0][2]
         max_iter = int(args[0][3])

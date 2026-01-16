@@ -710,10 +710,13 @@ class CreacionModelo(QWidget):
             btn_seguir.setHidden(False)
             btn_crear.setEnabled(True)
             barra_progreso.setHidden(True)
+
+            caja_texto.setText(eval(switch[nom]) + str(modelo['modelo']))
         
         def error_entrenamiento(mensaje):
             QMessageBox.critical(self, 'Error de entrenamiento: ', mensaje)
             barra_progreso.setHidden(True)
+            btn_crear.setEnabled(True)
 
         btn_layout.addStretch()
         btn_layout.addWidget(btn_crear)

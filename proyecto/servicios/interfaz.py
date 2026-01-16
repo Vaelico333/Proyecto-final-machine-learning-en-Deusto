@@ -591,7 +591,7 @@ class CreacionModelo(QWidget):
         btn_crear.setStyleSheet(u"background-color: #68c5d8;")
 
         btn_optim.setStyleSheet(u"background-color: #68c5d8;")
-        btn_optim.setText(u"Crear modelo optimizado con RSCV")
+        btn_optim.setText(u"Crear modelo optimizado con validación cruzada")
 
         params_layout, parametros = self.crear_combos(params_layout, nom)
 
@@ -757,6 +757,8 @@ class CreacionModelo(QWidget):
         return params_layout, parametros
     
     def ir_a_evaluacion(self):
+        enviar_modelo = pyqtSignal(object)
+
         self.widget_apilado.setCurrentIndex(4)
 
 class EvaluacionModelo(QWidget):
@@ -839,6 +841,8 @@ class VentanaPrincipal(QMainWindow):
         self.widget_apilado.addWidget(self.creacion_modelo)    # índice 3
         self.widget_apilado.addWidget(self.evaluacion_modelo)  # índice 4
         self.widget_apilado.addWidget(self.informe_graficos)   # índice 5
+        
+        self.creacion_modelo.enviar_modelo.connect(self.evaluacion_modelo.configurar_datos)
 
         # Mostrar la página de bienvenida
         self.widget_apilado.setCurrentIndex(0)

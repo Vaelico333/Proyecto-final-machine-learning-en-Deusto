@@ -3,7 +3,7 @@ from servicios.trabajador import Trabajador, Decorador
 class Modelo():
     def params(modelo) -> dict:
 
-        parametros_reglog = {'penalty':['l1','l2','elasticnet','None'],
+        parametros_reglog = {'penalty':['l1','l2','None'],
                              'C':['0.001', '0.01', '0.1', '1.0'],
                              'solver':['liblinear','newton-cg','saga'],
                              'max_iter':['10','50','100']}

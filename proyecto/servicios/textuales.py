@@ -85,7 +85,6 @@ Parámetros:
 - Penalty: es la regularización que se aplica al modelo, que castiga los coeficientes demasiado grandes para evitar el overfitting. Opciones:
     · "l2": la llamada técnica "Ridge", es la predeterminada, y penaliza la suma de los cuadrados de los coeficientes.
     · "l1": conocida como "Lasso", penaliza el valor absoluto de los coeficientes, pudiendo llevar algunos valores a 0, y actuando así como una herramienta de selección de variables.
-    · "elasticnet": es una combinación de las dos anteriores.
     · "None": no aplica ninguna regularización
 - C: controla cómo de fuerte es la penalización aplicada. Consiste en un número de tipo "float" positivo.
     · Valor bajo: presentará una regularización fuerte. Se evita el overfitting, pero el modelo podría perder capacidad de ajuste.

@@ -34,14 +34,15 @@ Interfaz: tipo dashboard
         -> QCanvas
         -> QLabel con explicación del tipo de modelo 
         -> Botón: Continuar análisis - Evaluación del modelo
+
 - Página de evaluación del modelo:
+    Tipo dashboard
     · matriz de confusión
         -> QCanvas
     · puntuaciones: precisión, recuperación 
         -> QLabel tipo KPI
     · curva ROC-AUC
         -> Gráfica en un QCanvas, QLabel con explicación
-    · Si puntuaciones bajas -> Botón: ofrecer podado del bosque -> página alternativa de creación del modelo
 - Página de gráficas:
     -> TabWidget con las siguientes pestañas:
     · importancia de las características +  informe
@@ -524,6 +525,7 @@ class PaginaEDA(QWidget):
 
 class CreacionModelo(QWidget):
     """Página de creación del modelo"""
+    enviar_modelo = pyqtSignal(object)
         
     def __init__(self, widget_apilado):
         super().__init__()
@@ -584,8 +586,7 @@ class CreacionModelo(QWidget):
         btn_seguir.setHidden(True)
         btn_seguir.setFont(QFont("Eras Medium ITC", 12))
         btn_seguir.setMinimumHeight(40)
-        btn_seguir.clicked.connect(lambda: print(self.modelos))
-        btn_seguir.clicked.connect(self.ir_a_evaluacion)
+        btn_seguir.clicked.connect(lambda: self.ir_a_evaluacion(self.modelos[nom]))
         btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
 
         btn_crear.setStyleSheet(u"background-color: #68c5d8;")
@@ -618,11 +619,11 @@ class CreacionModelo(QWidget):
         control_entrenamiento = ControlEntrenamiento()
 
 
-        def boton_modelo(nom: str, rscv: bool = False):
+        def boton_modelo(nom: str, gcsv: bool = False):
             barra_progreso.setHidden(False)
             barra_progreso.setValue(0)
 
-            if rscv:
+            if gcsv:
                 btn_optim.setEnabled(False)
                 btn_optim.setStyleSheet(u"background-color: #00b300;")
                 btn_crear.setStyleSheet(u"background-color: #68c5d8;")
@@ -634,7 +635,6 @@ class CreacionModelo(QWidget):
                 trabajador.señales.error.connect(error_entrenamiento)
 
                 self.threadpools[nom].start(trabajador)
-                btn_optim.setEnabled(True)
 
             else:
                 btn_crear.setEnabled(False)
@@ -691,7 +691,7 @@ class CreacionModelo(QWidget):
             figura.clear()
             ax = figura.add_subplot(111)
 
-            y_pred = modelo.predict(X)
+            y_pred = modelo['modelo'].predict(X)
             GrafModelo.graf_reglog(y, y_pred, ax)
 
 
@@ -700,7 +700,7 @@ class CreacionModelo(QWidget):
 
 
         def terminar_entrenamiento(modelo):
-            self.modelos[nom] = modelo['modelo']
+            self.modelos[nom] = modelo
             print(self.modelos)
             X_test = modelo['X_test']
             y_test = modelo['y_test']
@@ -709,6 +709,7 @@ class CreacionModelo(QWidget):
 
             btn_seguir.setHidden(False)
             btn_crear.setEnabled(True)
+            btn_optim.setEnabled(True)
             barra_progreso.setHidden(True)
 
             caja_texto.setText(eval(switch[nom]) + str(modelo['modelo']))
@@ -756,36 +757,77 @@ class CreacionModelo(QWidget):
         params_layout.addStretch()
         return params_layout, parametros
     
-    def ir_a_evaluacion(self):
-        enviar_modelo = pyqtSignal(object)
+    def ir_a_evaluacion(self, modelo):
+        self.enviar_modelo.emit(modelo)
 
         self.widget_apilado.setCurrentIndex(4)
 
 class EvaluacionModelo(QWidget):
     """Página de evaluación del modelo"""
-    def __init__(self):
-        super().__init__()
+    modelo = None
     def __init__(self, widget_apilado):
         super().__init__()
         self.widget_apilado = widget_apilado
         self.init_ui()
 
+    def recibir_modelo(self, modelo):
+        self.modelo = modelo
+        print(self.modelo)
+        self.label.setText(f'{self.modelo["modelo"]} recibido')
+        if self.modelo:
+            QMessageBox.information(self, 'Envío exitoso', f'{self.modelo["modelo"]} recibido')
+
     def init_ui(self):
-        layout = QVBoxLayout()
-        label = QLabel("Página de evaluación del modelo")
-        label.setFont(QFont("Arial", 16))
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
+        '''Estructura más sencilla:
+        - VBox con título 
+        - HBox con la info:
+            · Izda: VBox con KPIs y texto
+                + Arriba: (KPIs -> (HBox -> (VBox -> (título + métrica))))
+                    -> accuracy, precision, recall, F1
+                + Abajo: Descripción QScrollArea
+            · Dcha: VBox con gráficas
+                if reglog:
+                    ROC-AUC
+                    Matriz de confusión
+                    Log loss
+                    
+                if bosque:
+                    ROC-AUC
+                    Matriz de confusión
+                    importancia de caracteristicas
+
+                if xgb:
+                    ROC
+                    Matriz de confusión
+                    importancia de caracteristicas'''
+        self.layout_principal = QVBoxLayout()
+        self.etiqueta_titulo = QLabel(f"Evaluación del modelo")
+        self.etiqueta_titulo.setGeometry(QRect(165, 50, 850, 100))
+        self.fuente_titulo = QFont("OCR A Extended", 72, 50)
+        self.etiqueta_titulo.setFont(self.fuente_titulo)
+        self.etiqueta_titulo.setStyleSheet(u"background-color: rgb(0, 255, 255);""")
+        self.etiqueta_titulo.setFrameShape(QFrame.Panel)
+        self.etiqueta_titulo.setFrameShadow(QFrame.Raised)
+        self.etiqueta_titulo.setLineWidth(5)
+        self.etiqueta_titulo.setAlignment(Qt.AlignCenter)
+
+        self.label = QLabel(f"Modelo no recibido")
+        self.label.setFont(QFont("Arial", 16))
+        self.label.setAlignment(Qt.AlignCenter)
         self.btn_seguir = QPushButton("Ir a gráficas e informes ➢")
         self.btn_seguir.setFont(QFont("Eras Medium ITC", 12))
         self.btn_seguir.setMinimumHeight(40)
         self.btn_seguir.clicked.connect(self.ir_a_graficos)
         self.btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
-        layout.addWidget(self.btn_seguir)
-        self.setLayout(layout)
+
+        self.layout_principal.addWidget(self.etiqueta_titulo)
+        self.layout_principal.addWidget(self.label)
+        self.layout_principal.addWidget(self.btn_seguir)
+        self.setLayout(self.layout_principal)
 
     def ir_a_graficos(self):
         self.widget_apilado.setCurrentIndex(5)
+
 
 class InformeGraficos(QWidget):
     """Página de gráficas e informes"""
@@ -842,7 +884,7 @@ class VentanaPrincipal(QMainWindow):
         self.widget_apilado.addWidget(self.evaluacion_modelo)  # índice 4
         self.widget_apilado.addWidget(self.informe_graficos)   # índice 5
         
-        self.creacion_modelo.enviar_modelo.connect(self.evaluacion_modelo.configurar_datos)
+        self.creacion_modelo.enviar_modelo.connect(self.evaluacion_modelo.recibir_modelo)
 
         # Mostrar la página de bienvenida
         self.widget_apilado.setCurrentIndex(0)

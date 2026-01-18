@@ -691,8 +691,8 @@ class CreacionModelo(QWidget):
             figura.clear()
             ax = figura.add_subplot(111)
 
-            y_pred = modelo['modelo'].predict(X)
-            GrafModelo.graf_reglog(y, y_pred, ax)
+            modelo['y_pred'] = modelo['modelo'].predict(X)
+            GrafModelo.graf_reglog(y, modelo['y_pred'], ax)
 
 
             # Actualizamos el lienzo
@@ -764,7 +764,8 @@ class CreacionModelo(QWidget):
 
 class EvaluacionModelo(QWidget):
     """Página de evaluación del modelo"""
-    modelo = None
+    
+    modelo =  None
     def __init__(self, widget_apilado):
         super().__init__()
         self.widget_apilado = widget_apilado
@@ -773,9 +774,8 @@ class EvaluacionModelo(QWidget):
     def recibir_modelo(self, modelo):
         self.modelo = modelo
         print(self.modelo)
-        self.label.setText(f'{self.modelo["modelo"]} recibido')
-        if self.modelo:
-            QMessageBox.information(self, 'Envío exitoso', f'{self.modelo["modelo"]} recibido')
+        self.caja_texto.setText(f'{modelo["modelo"]} recibido')
+        self.crear_kpis()
 
     def init_ui(self):
         '''Estructura más sencilla:
@@ -802,18 +802,36 @@ class EvaluacionModelo(QWidget):
                     importancia de caracteristicas'''
         self.layout_principal = QVBoxLayout()
         self.etiqueta_titulo = QLabel(f"Evaluación del modelo")
+        self.layout_datos = QHBoxLayout()
+        self.layout_izda = QVBoxLayout()
+        self.layout_kpis = QHBoxLayout()
+        self.caja_texto = QLabel()
+        self.area_doc = QScrollArea()
+        self.layout_dcha = QVBoxLayout()
+
         self.etiqueta_titulo.setGeometry(QRect(165, 50, 850, 100))
         self.fuente_titulo = QFont("OCR A Extended", 72, 50)
         self.etiqueta_titulo.setFont(self.fuente_titulo)
-        self.etiqueta_titulo.setStyleSheet(u"background-color: rgb(0, 255, 255);""")
+        self.etiqueta_titulo.setStyleSheet(u"background-color: rgb(0, 255, 255);")
         self.etiqueta_titulo.setFrameShape(QFrame.Panel)
         self.etiqueta_titulo.setFrameShadow(QFrame.Raised)
         self.etiqueta_titulo.setLineWidth(5)
         self.etiqueta_titulo.setAlignment(Qt.AlignCenter)
 
-        self.label = QLabel(f"Modelo no recibido")
-        self.label.setFont(QFont("Arial", 16))
-        self.label.setAlignment(Qt.AlignCenter)
+        self.caja_texto.setText('')
+        self.caja_texto.setWordWrap(True)
+        self.caja_texto.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.caja_texto.setFont(QFont("Noto Serif", 14))
+        self.caja_texto.setStyleSheet(u"padding: 15px;"
+                                      "background-color:#777777;"
+                                      "color:#ffffff;")
+
+        self.area_doc.setWidgetResizable(True)
+        self.area_doc.setWidget(self.caja_texto)
+        self.area_doc.setFrameShape(QFrame.Box)
+        self.area_doc.setFrameShadow(QFrame.Raised)
+        self.area_doc.setLineWidth(4)
+
         self.btn_seguir = QPushButton("Ir a gráficas e informes ➢")
         self.btn_seguir.setFont(QFont("Eras Medium ITC", 12))
         self.btn_seguir.setMinimumHeight(40)
@@ -821,9 +839,41 @@ class EvaluacionModelo(QWidget):
         self.btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
 
         self.layout_principal.addWidget(self.etiqueta_titulo)
-        self.layout_principal.addWidget(self.label)
+        self.layout_principal.addLayout(self.layout_datos)
+        self.layout_datos.addLayout(self.layout_izda)
+        self.layout_izda.addLayout(self.layout_kpis)
+        self.layout_izda.addWidget(self.area_doc)
+        self.layout_datos.addLayout(self.layout_dcha)
         self.layout_principal.addWidget(self.btn_seguir)
         self.setLayout(self.layout_principal)
+        if self.modelo:
+            QMessageBox.information(self, 'Envío exitoso', f'{self.modelo["modelo"]} recibido')
+
+    def crear_kpis(self):
+        while self.layout_kpis.count():
+            objeto = self.layout_kpis.takeAt(0)
+            widget = objeto.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        y_test = self.modelo['y_test'] 
+        y_pred = self.modelo['y_pred'] 
+        for titulo, kpi in Evaluacion.kpis(y_test, y_pred).items():
+            caja_kpi = QVBoxLayout()
+            titulo_kpi = QLabel(titulo)
+            titulo_kpi.setStyleSheet(u"padding: 15px;"
+                                    "background-color:#777777;"
+                                    "color:#ffffff;"
+                                    "font-size: 24;")
+            metrica = QLabel(f'{kpi:.4f}')
+            metrica.setStyleSheet(u"padding: 15px;"
+                                    "background-color:#000000;"
+                                    "color:#ffffff;"
+                                    "font-size: 24;")
+            caja_kpi.addWidget(titulo_kpi)
+            caja_kpi.addWidget(metrica)
+            self.layout_kpis.addLayout(caja_kpi)
+            
 
     def ir_a_graficos(self):
         self.widget_apilado.setCurrentIndex(5)
@@ -885,6 +935,7 @@ class VentanaPrincipal(QMainWindow):
         self.widget_apilado.addWidget(self.informe_graficos)   # índice 5
         
         self.creacion_modelo.enviar_modelo.connect(self.evaluacion_modelo.recibir_modelo)
+        #self.creacion_modelo.enviar_modelo.connect(self.evaluacion_modelo.crear_kpis)
 
         # Mostrar la página de bienvenida
         self.widget_apilado.setCurrentIndex(0)

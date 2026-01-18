@@ -96,7 +96,7 @@ class Modelo():
         lista_params.append(bool(args[-1]))
         modelo =  RandomForestClassifier(n_estimators=1, max_depth=lista_params[1], min_samples_split=lista_params[2],
                                     min_samples_leaf=lista_params[3], max_features=lista_params[4], bootstrap=lista_params[5], 
-                                    random_state=17)
+                                    random_state=17, oob_score=True)
         for n in range(1, control.total_pasos+1):
             modelo.n_estimators = n
             modelo.fit(X_train, y_train)
@@ -201,7 +201,7 @@ class Modelo():
             modelo = LogisticRegression(random_state=17, n_jobs=-1)
             mod = LogisticRegression
         elif nom == 'bosque':
-            modelo = RandomForestClassifier(max_samples=0.5, random_state=17, n_jobs=6)
+            modelo = RandomForestClassifier(max_samples=0.5, random_state=17, n_jobs=6, oob_score=True)
             mod = RandomForestClassifier
         elif nom == 'xgb':
             modelo = XGBClassifier(tree_method='hist', device='cpu', random_state=17, n_jobs=-1)
@@ -240,4 +240,27 @@ class Modelo():
         return modelo_dicc
 
 class Evaluacion:
-    pass
+    def kpis(y_test, y_pred) -> dict:
+
+        from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+        import numpy as np
+        kpis = {}
+        punteria = accuracy_score(y_test, y_pred)
+        kpis['Puntería'] = punteria
+        precision = precision_score(y_test, y_pred, zero_division=np.nan)
+        kpis['Precisión'] = precision
+        llamada = recall_score(y_test, y_pred, zero_division=np.nan)
+        kpis['Llamada'] = llamada
+        f1 = f1_score(y_test, y_pred, zero_division=np.nan)
+        kpis['F1'] = f1
+        return kpis
+
+    def reglog_eval():
+        '''Matriz de confusion, log loss por clase y curva roc'''
+        pass
+    def bosque_eval():
+        '''matriz, importancia de caracteristicas y oob'''
+        pass
+    def xgb_eval():
+        '''matriz, importancia de caracteristicas y métricas de evaluación'''
+        pass

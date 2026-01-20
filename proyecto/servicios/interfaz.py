@@ -64,7 +64,7 @@ from servicios.generador_datos import *
 from servicios.analisis import *
 from servicios.modelos import *
 from servicios.graficos import *
-from servicios.trabajador import Trabajador, ControlEntrenamiento
+from servicios.trabajador import Trabajador, ControlEntrenamiento, CapturadorConsola
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
@@ -571,7 +571,10 @@ class CreacionModelo(QWidget):
         form_layout = QVBoxLayout()
         modelo_layout = QVBoxLayout()
         modelo_label = QLabel()
-        barra_progreso = QProgressBar()
+        barra_progreso_total = QProgressBar()
+        barra_progreso_parcial = QProgressBar()
+        etiqueta_progreso_iter = QLabel()
+        etiqueta_progreso_cand = QLabel()
         figura = Figure()
         repr_modelo = FigureCanvas(figura)
         caja_texto = QLabel()
@@ -581,7 +584,10 @@ class CreacionModelo(QWidget):
         btn_optim = QPushButton()
         btn_seguir = QPushButton("Continuar con este modelo ➢")
 
-        barra_progreso.setHidden(True)
+        barra_progreso_total.setHidden(True)
+        barra_progreso_parcial.setHidden(True)
+        etiqueta_progreso_iter.setHidden(True)
+        etiqueta_progreso_cand.setHidden(True)
 
         btn_seguir.setHidden(True)
         btn_seguir.setFont(QFont("Eras Medium ITC", 12))
@@ -620,17 +626,37 @@ class CreacionModelo(QWidget):
 
 
         def boton_modelo(nom: str, gcsv: bool = False):
-            barra_progreso.setHidden(False)
-            barra_progreso.setValue(0)
+            barra_progreso_total.setHidden(False)
+            
 
             if gcsv:
+                barra_progreso_parcial.setHidden(False)
+                etiqueta_progreso_iter.setHidden(False)
+                etiqueta_progreso_cand.setHidden(False)
                 btn_optim.setEnabled(False)
                 btn_optim.setStyleSheet(u"background-color: #00b300;")
                 btn_crear.setStyleSheet(u"background-color: #68c5d8;")
-                print('creando modelo gscv')
-                trabajador = Trabajador(Modelo.gs_cv, nom, objeto_control=control_entrenamiento)
+                print('Buscando el mejor modelo mediante validación cruzada por búsqueda en cuadrícula...')
+                self.capturador_actual = CapturadorConsola()
+                trabajador = Trabajador(Modelo.gs_cv, nom, capturador=self.capturador_actual)
 
-                trabajador.señales.progreso.connect(barra_progreso.setValue)
+                self.capturador_actual.progreso_total.connect(barra_progreso_total.setValue)
+                self.capturador_actual.progreso_parcial.connect(barra_progreso_parcial.setValue)
+
+                def texto_progreso(datos):
+                    """
+                    Genera el texto de progreso actual y actualiza la o las etiquetas de progreso
+                    
+                    :param datos: Description
+                    """
+                    if datos['iter'] and datos['iter'] > 0:
+                        mensaje = f'''Iteración nº: {datos['iter']}'''
+                        etiqueta_progreso_iter.setText(mensaje)
+                    if datos['cand'] and datos['cand'] > 0:
+                        mensaje = f'''Candidato nº {datos['cand']} de {datos['cand_total']}'''
+                        etiqueta_progreso_cand.setText(mensaje)
+
+                self.capturador_actual.mensaje_status.connect(texto_progreso)                
                 trabajador.señales.terminado.connect(terminar_entrenamiento)
                 trabajador.señales.error.connect(error_entrenamiento)
 
@@ -649,7 +675,7 @@ class CreacionModelo(QWidget):
                 if nom == 'reglog':
                     control_entrenamiento.total_pasos = int(parametros['max_iter'].currentText())
                     trabajador = Trabajador(Modelo.reglog, params, objeto_control=control_entrenamiento)
-                    trabajador.señales.progreso.connect(barra_progreso.setValue)
+                    trabajador.señales.progreso.connect(barra_progreso_total.setValue)
 
                 elif nom == 'bosque':
                     control_entrenamiento.total_pasos = int(parametros['n_estimators'].currentText())
@@ -659,7 +685,7 @@ class CreacionModelo(QWidget):
                     control_entrenamiento.total_pasos = int(parametros['n_estimators'].currentText())
                     trabajador = Trabajador(Modelo.xgb, *params, objeto_control=control_entrenamiento)
 
-                trabajador.señales.progreso.connect(barra_progreso.setValue)
+                trabajador.señales.progreso.connect(barra_progreso_total.setValue)
                 trabajador.señales.terminado.connect(terminar_entrenamiento)
                 trabajador.señales.error.connect(error_entrenamiento)
 
@@ -692,7 +718,7 @@ class CreacionModelo(QWidget):
             ax = figura.add_subplot(111)
 
             modelo['y_pred'] = modelo['modelo'].predict(X)
-            GrafModelo.graf_reglog(y, modelo['y_pred'], ax)
+            GrafModelo.graf_muestra(y, modelo['y_pred'], ax)
 
 
             # Actualizamos el lienzo
@@ -710,13 +736,19 @@ class CreacionModelo(QWidget):
             btn_seguir.setHidden(False)
             btn_crear.setEnabled(True)
             btn_optim.setEnabled(True)
-            barra_progreso.setHidden(True)
+            barra_progreso_parcial.setHidden(True)
+            barra_progreso_total.setHidden(True)
+            etiqueta_progreso_iter.setHidden(True)
+            etiqueta_progreso_cand.setHidden(True)
 
             caja_texto.setText(eval(switch[nom]) + str(modelo['modelo']))
         
         def error_entrenamiento(mensaje):
             QMessageBox.critical(self, 'Error de entrenamiento: ', mensaje)
-            barra_progreso.setHidden(True)
+            barra_progreso_parcial.setHidden(True)
+            barra_progreso_total.setHidden(True)
+            etiqueta_progreso_iter.setHidden(True)
+            etiqueta_progreso_cand.setHidden(True)
             btn_crear.setEnabled(True)
 
         btn_layout.addStretch()
@@ -729,7 +761,10 @@ class CreacionModelo(QWidget):
         layout_izq.addLayout(doc_layout)
         layout_pest.addLayout(layout_izq)
         modelo_layout.addWidget(modelo_label, stretch=1)
-        modelo_layout.addWidget(barra_progreso)
+        modelo_layout.addWidget(barra_progreso_total)
+        modelo_layout.addWidget(barra_progreso_parcial)
+        modelo_layout.addWidget(etiqueta_progreso_iter)
+        modelo_layout.addWidget(etiqueta_progreso_cand)
         modelo_layout.addWidget(repr_modelo, stretch=9)
         modelo_layout.addWidget(btn_seguir)
         layout_pest.addLayout(modelo_layout)

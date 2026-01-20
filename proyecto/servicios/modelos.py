@@ -142,20 +142,15 @@ class Modelo():
         modelo_dicc['modelo'] = modelo
         return modelo_dicc
     
-    @Decorador.progreso
     def gs_cv(nom, **kwargs):
 
         from sklearn.experimental import enable_halving_search_cv
-        from sklearn.model_selection import HalvingGridSearchCV, ParameterGrid
+        from sklearn.model_selection import HalvingGridSearchCV
         from sklearn.linear_model import LogisticRegression
         from sklearn.ensemble import RandomForestClassifier
         from xgboost import XGBClassifier
         from sklearn.model_selection import train_test_split
-        from sklearn.metrics import make_scorer, accuracy_score
         from joblib import parallel_backend
-
-        reporte = kwargs['reporte_progreso']
-        control = kwargs['objeto_control']
 
         modelo_dicc = {}
         df = Analisis.limpiar_errores()
@@ -198,43 +193,39 @@ class Modelo():
                 else:
                     parametros_convertidos[k] = v
         if nom == 'reglog':
-            modelo = LogisticRegression(random_state=17, n_jobs=-1)
+            modelo = LogisticRegression(random_state=17, n_jobs=1)
             mod = LogisticRegression
         elif nom == 'bosque':
-            modelo = RandomForestClassifier(max_samples=0.5, random_state=17, n_jobs=6, oob_score=True)
+            modelo = RandomForestClassifier(max_samples=0.5, random_state=17, n_jobs=1)
             mod = RandomForestClassifier
         elif nom == 'xgb':
-            modelo = XGBClassifier(tree_method='hist', device='cpu', random_state=17, n_jobs=-1)
+            modelo = XGBClassifier(tree_method='hist', device='cpu', random_state=17, n_jobs=1)
             mod = XGBClassifier
 
-        n_candidatos = len(ParameterGrid(parametros_convertidos))
-        control.total_pasos = n_candidatos * 1.5
-
-        contador = {'actual':0}
-        def puntuador_progreso(y_true, y_pred):
-            contador['actual'] += 1
-            reporte(contador['actual'])
-            return accuracy_score(y_true, y_pred)
         
         hgscv = HalvingGridSearchCV(
                 modelo, 
                 parametros_convertidos, 
-                factor=3, 
+                factor=4, 
                 resource='n_samples', 
                 max_resources=len(X_train),
                 random_state=17,
                 cv=3,
-                n_jobs=1, 
-                refit=False)
-        
-        hgscv.scoring = make_scorer(puntuador_progreso)
+                n_jobs=-1, 
+                refit=False,
+                aggressive_elimination=True,
+                verbose=3)
         with parallel_backend('threading'):
             hgscv.fit(X_train, y_train)
 
         mejores = hgscv.best_params_
+        if nom == 'bosque':
+            mejores['oob_score'] = True
+        print(mejores)
         modelo_final = mod(**mejores, random_state=17, n_jobs=-1)
+        print('Entrenando el modelo final...')
         modelo_final.fit(X_train, y_train)
-        print("Mejor: ", modelo_final)
+        print("Mejor modelo: ", modelo_final)
 
         modelo_dicc['modelo'] = modelo_final
         return modelo_dicc

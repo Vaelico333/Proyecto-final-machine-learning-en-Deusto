@@ -227,7 +227,7 @@ class CreacionDatos(QWidget):
         self.btn_seguir.setFont(QFont("Eras Medium ITC", 12))
         self.btn_seguir.setMinimumHeight(40)
         self.btn_seguir.clicked.connect(self.ir_a_eda)
-        self.btn_seguir.setStyleSheet(u"background-color: #a82626;"+"color: #ffcb53;")
+        self.btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
         
         # Agregamos las partes a la página
         self.layout_principal.addWidget(self.etiqueta_titulo)
@@ -392,8 +392,9 @@ class PaginaEDA(QWidget):
         btn_arreglar = QPushButton()
 
         df = Leer_Datos.abrir_csv()
+        df.info()
         if nom == 'num':
-            columnas = [col for col in df.columns if df[col].dtype == 'object' and col != 'hospitalizacion']
+            columnas = [col for col in df.columns if df[col].dtype == 'str' and col != 'hospitalizacion']
             form_cols.addItems(['Elige una columna'] + columnas)
             df_label.setText("Columna transformada")
         elif nom == 'err':
@@ -627,7 +628,7 @@ class CreacionModelo(QWidget):
 
         def boton_modelo(nom: str, gcsv: bool = False):
             barra_progreso_total.setHidden(False)
-            
+            btn_seguir.setEnabled(False)
 
             if gcsv:
                 barra_progreso_parcial.setHidden(False)
@@ -674,7 +675,7 @@ class CreacionModelo(QWidget):
                 
                 if nom == 'reglog':
                     control_entrenamiento.total_pasos = int(parametros['max_iter'].currentText())
-                    trabajador = Trabajador(Modelo.reglog, params, objeto_control=control_entrenamiento)
+                    trabajador = Trabajador(Modelo.reglog, *params, objeto_control=control_entrenamiento)
                     trabajador.señales.progreso.connect(barra_progreso_total.setValue)
 
                 elif nom == 'bosque':
@@ -683,6 +684,7 @@ class CreacionModelo(QWidget):
 
                 elif nom == 'xgb':
                     control_entrenamiento.total_pasos = int(parametros['n_estimators'].currentText())
+                    print(params)
                     trabajador = Trabajador(Modelo.xgb, *params, objeto_control=control_entrenamiento)
 
                 trabajador.señales.progreso.connect(barra_progreso_total.setValue)
@@ -732,6 +734,7 @@ class CreacionModelo(QWidget):
             y_test = modelo['y_test']
 
             generar_grafica(self.modelos[nom], X_test, y_test)
+            btn_seguir.setEnabled(True)
 
             btn_seguir.setHidden(False)
             btn_crear.setEnabled(True)
@@ -799,8 +802,9 @@ class CreacionModelo(QWidget):
 
 class EvaluacionModelo(QWidget):
     """Página de evaluación del modelo"""
-    
+    enviar_modelo = pyqtSignal(object)    
     modelo =  None
+
     def __init__(self, widget_apilado):
         super().__init__()
         self.widget_apilado = widget_apilado
@@ -809,32 +813,12 @@ class EvaluacionModelo(QWidget):
     def recibir_modelo(self, modelo):
         self.modelo = modelo
         print(self.modelo)
-        self.caja_texto.setText(f'{modelo["modelo"]} recibido')
+        self.caja_texto.setText(f'{type(self.modelo["modelo"]).__name__} recibido')
+        self.etiqueta_titulo.setText(f"Evaluación del modelo {type(self.modelo['modelo']).__name__}")
         self.crear_kpis()
+        self.crear_graficas()
 
     def init_ui(self):
-        '''Estructura más sencilla:
-        - VBox con título 
-        - HBox con la info:
-            · Izda: VBox con KPIs y texto
-                + Arriba: (KPIs -> (HBox -> (VBox -> (título + métrica))))
-                    -> accuracy, precision, recall, F1
-                + Abajo: Descripción QScrollArea
-            · Dcha: VBox con gráficas
-                if reglog:
-                    ROC-AUC
-                    Matriz de confusión
-                    Log loss
-                    
-                if bosque:
-                    ROC-AUC
-                    Matriz de confusión
-                    importancia de caracteristicas
-
-                if xgb:
-                    ROC
-                    Matriz de confusión
-                    importancia de caracteristicas'''
         self.layout_principal = QVBoxLayout()
         self.etiqueta_titulo = QLabel(f"Evaluación del modelo")
         self.layout_datos = QHBoxLayout()
@@ -843,9 +827,15 @@ class EvaluacionModelo(QWidget):
         self.caja_texto = QLabel()
         self.area_doc = QScrollArea()
         self.layout_dcha = QVBoxLayout()
+        self.figura_matriz_conf = Figure()
+        self.graf_matriz_conf = FigureCanvas(self.figura_matriz_conf)
+        self.figura_roc = Figure()
+        self.graf_roc = FigureCanvas(self.figura_roc)
+        self.figura_custom = Figure()
+        self.graf_custom = FigureCanvas(self.figura_custom)
 
         self.etiqueta_titulo.setGeometry(QRect(165, 50, 850, 100))
-        self.fuente_titulo = QFont("OCR A Extended", 72, 50)
+        self.fuente_titulo = QFont("OCR A Extended", 50, 50)
         self.etiqueta_titulo.setFont(self.fuente_titulo)
         self.etiqueta_titulo.setStyleSheet(u"background-color: rgb(0, 255, 255);")
         self.etiqueta_titulo.setFrameShape(QFrame.Panel)
@@ -867,6 +857,7 @@ class EvaluacionModelo(QWidget):
         self.area_doc.setFrameShadow(QFrame.Raised)
         self.area_doc.setLineWidth(4)
 
+        
         self.btn_seguir = QPushButton("Ir a gráficas e informes ➢")
         self.btn_seguir.setFont(QFont("Eras Medium ITC", 12))
         self.btn_seguir.setMinimumHeight(40)
@@ -878,11 +869,12 @@ class EvaluacionModelo(QWidget):
         self.layout_datos.addLayout(self.layout_izda)
         self.layout_izda.addLayout(self.layout_kpis)
         self.layout_izda.addWidget(self.area_doc)
+        self.layout_dcha.addWidget(self.graf_matriz_conf)
+        self.layout_dcha.addWidget(self.graf_roc)
+        self.layout_dcha.addWidget(self.graf_custom)
         self.layout_datos.addLayout(self.layout_dcha)
         self.layout_principal.addWidget(self.btn_seguir)
         self.setLayout(self.layout_principal)
-        if self.modelo:
-            QMessageBox.information(self, 'Envío exitoso', f'{self.modelo["modelo"]} recibido')
 
     def crear_kpis(self):
         while self.layout_kpis.count():
@@ -893,51 +885,175 @@ class EvaluacionModelo(QWidget):
 
         y_test = self.modelo['y_test'] 
         y_pred = self.modelo['y_pred'] 
-        for titulo, kpi in Evaluacion.kpis(y_test, y_pred).items():
+        self.layout_kpis.addStretch()
+        self.modelo['kpis'] = Evaluacion.kpis(y_test, y_pred)
+        for titulo, kpi in self.modelo['kpis'].items():
             caja_kpi = QVBoxLayout()
             titulo_kpi = QLabel(titulo)
+            fuente = QFont("Noto Serif", 14)
+
             titulo_kpi.setStyleSheet(u"padding: 15px;"
-                                    "background-color:#777777;"
-                                    "color:#ffffff;"
-                                    "font-size: 24;")
+                                    "background-color: #777777;"
+                                    "color: #ffffff;")
+            titulo_kpi.setFont(fuente)
+            titulo_kpi.setAlignment(Qt.AlignCenter)
+
             metrica = QLabel(f'{kpi:.4f}')
             metrica.setStyleSheet(u"padding: 15px;"
                                     "background-color:#000000;"
-                                    "color:#ffffff;"
-                                    "font-size: 24;")
+                                    "color:#ffffff;")
+            metrica.setFont(fuente)
+            metrica.setAlignment(Qt.AlignCenter)
+
             caja_kpi.addWidget(titulo_kpi)
             caja_kpi.addWidget(metrica)
             self.layout_kpis.addLayout(caja_kpi)
+        self.layout_kpis.addStretch()
             
+    def crear_graficas(self):
+        """
+        Docstring for crear_graficas
+        
+        """
+        figuras = [self.figura_matriz_conf, self.figura_roc, self.figura_custom]
+        axes = []
+        for fig in figuras:
+            fig.clear()
+            ax = fig.add_subplot(111)
+            axes.append(ax)
+            fig.tight_layout(w_pad=1.15)
+        nom = type(self.modelo["modelo"]).__name__
+        axes, metricas = Evaluacion.eval_modelo(self.modelo, axes, nom)
+        self.modelo['metricas'] = metricas
+
+        self.graf_matriz_conf.draw()
+        self.graf_roc.draw()
+        self.graf_custom.draw()
 
     def ir_a_graficos(self):
+        self.enviar_modelo.emit(self.modelo)
         self.widget_apilado.setCurrentIndex(5)
 
 
 class InformeGraficos(QWidget):
     """Página de gráficas e informes"""
-    def __init__(self):
-        super().__init__()
+    modelo = None
+    kpis = dict()
+    metricas = dict()
     def __init__(self, widget_apilado):
         super().__init__()
         self.widget_apilado = widget_apilado
         self.init_ui()
 
+    def recibir_datos(self, modelo):
+        self.modelo = modelo
+        self.etiqueta_titulo.setText(f"Informe del modelo {type(self.modelo['modelo']).__name__}")
+        print("Datos del modelo:\n",self.modelo)
+        self.kpis = modelo["kpis"]
+        print("Indicadores clave de rendimiento:\n", self.kpis)
+        self.metricas = modelo["metricas"]
+        self.caja_info.setText(f'{type(self.modelo["modelo"]).__name__} recibido\n'
+                           f'KPIs:\n{self.kpis}'
+                           f'\nMetricas:\n{self.metricas}')
+        self.grafica_resultado()
+
     def init_ui(self):
-        layout = QVBoxLayout()
-        label = QLabel("Página de gráficas e informes")
-        label.setFont(QFont("Arial", 16))
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
+        self.layout_principal = QVBoxLayout()
+        self.etiqueta_titulo = QLabel(f"Informe del modelo")
+
+        self.layout_contenido = QHBoxLayout()
+        self.layout_izda = QVBoxLayout()
+        self.caja_texto = QLabel()
+        self.area_doc = QScrollArea()
+        self.btn_guardar = QPushButton(u"💾 Guardar modelo (formato ONNX)")
+
+        self.layout_dcha = QVBoxLayout()
+        self.figura = Figure()
+        self.area_graf = FigureCanvas(self.figura)
+        self.caja_info = QLabel()
+        self.area_info = QScrollArea()
         self.btn_seguir = QPushButton("Volver al inicio ⮌")
+
+        self.etiqueta_titulo.setGeometry(QRect(165, 50, 850, 100))
+        self.fuente_titulo = QFont("OCR A Extended", 50, 50)
+        self.etiqueta_titulo.setFont(self.fuente_titulo)
+        self.etiqueta_titulo.setStyleSheet(u"background-color: rgb(0, 255, 255);")
+        self.etiqueta_titulo.setFrameShape(QFrame.Panel)
+        self.etiqueta_titulo.setFrameShadow(QFrame.Raised)
+        self.etiqueta_titulo.setLineWidth(5)
+        self.etiqueta_titulo.setAlignment(Qt.AlignCenter)
+
+        self.area_doc.setWidgetResizable(True)
+        self.area_doc.setWidget(self.caja_texto)
+        self.area_doc.setFrameShape(QFrame.Box)
+        self.area_doc.setFrameShadow(QFrame.Raised)
+        self.area_doc.setLineWidth(4)
+
+        self.caja_texto.setText('')
+        self.caja_texto.setWordWrap(True)
+        self.caja_texto.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.caja_texto.setFont(QFont("Noto Serif", 14))
+        self.caja_texto.setStyleSheet(u"padding: 15px;"
+                                      "background-color:#777777;"
+                                      "color:#ffffff;")
+        
+        self.btn_guardar.setFont(QFont("System", 20))
+        self.btn_guardar.setMinimumHeight(40)
+        self.btn_guardar.clicked.connect(self.guardar_modelo)
+        self.btn_guardar.setStyleSheet(u"background-color: #8cd124;""color: #efdd52;")
+
+        self.area_info.setWidgetResizable(True)
+        self.area_info.setWidget(self.caja_info)
+        self.area_info.setFrameShape(QFrame.Box)
+        self.area_info.setFrameShadow(QFrame.Raised)
+        self.area_info.setLineWidth(4)
+
+        self.caja_info.setText('')
+        self.caja_info.setWordWrap(True)
+        self.caja_info.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.caja_info.setFont(QFont("System", 14))
+        self.caja_info.setStyleSheet(u"padding: 15px;"
+                                      "background-color: #777777;"
+                                      "color: #8cd124;")
+
+
         self.btn_seguir.setFont(QFont("Eras Medium ITC", 12))
         self.btn_seguir.setMinimumHeight(40)
-        self.btn_seguir.clicked.connect(self.ir_a_datos)
+        self.btn_seguir.clicked.connect(self.ir_a_inicio)
         self.btn_seguir.setStyleSheet(u"background-color: #a82626;""color: #ffcb53;")
-        layout.addWidget(self.btn_seguir)
-        self.setLayout(layout)
 
-    def ir_a_datos(self):
+        self.layout_principal.addWidget(self.etiqueta_titulo)
+        self.layout_principal.addLayout(self.layout_contenido)
+        self.layout_contenido.addLayout(self.layout_izda)
+        self.layout_contenido.addLayout(self.layout_dcha)
+        self.layout_izda.addWidget(self.area_doc)
+        self.layout_izda.addWidget(self.btn_guardar)
+        self.layout_principal.addLayout(self.layout_dcha)
+        self.layout_dcha.addWidget(self.area_graf, 8)
+        self.layout_dcha.addWidget(self.area_info, 2)
+        self.layout_principal.addWidget(self.btn_seguir)
+        self.setLayout(self.layout_principal)
+
+    def guardar_modelo(self):
+        mensaje = ''
+        try:
+            mensaje = Modelo.guardar_modelo(modelo=self.modelo['modelo'],
+                                kpis= self.modelo['kpis'],
+                                X=self.modelo['X_test'])
+            QMessageBox.information(self, 'Guardado del modelo', mensaje)
+        except Exception as e:
+            print('Error:', e)
+            QMessageBox.critical(self, 'Error brutal', f'Encontramos la razón: {e}')
+
+    def grafica_resultado(self):
+        self.figura.clear()
+        ax = self.figura.add_subplot(111)
+        nom = type(self.modelo["modelo"]).__name__
+        Informes.grafico_final(self.modelo, ax, nom)
+        self.figura.tight_layout(w_pad=1.15)
+        self.area_graf.draw()
+
+    def ir_a_inicio(self):
         self.widget_apilado.setCurrentIndex(0)
 
 class VentanaPrincipal(QMainWindow):
@@ -970,7 +1086,7 @@ class VentanaPrincipal(QMainWindow):
         self.widget_apilado.addWidget(self.informe_graficos)   # índice 5
         
         self.creacion_modelo.enviar_modelo.connect(self.evaluacion_modelo.recibir_modelo)
-        #self.creacion_modelo.enviar_modelo.connect(self.evaluacion_modelo.crear_kpis)
+        self.evaluacion_modelo.enviar_modelo.connect(self.informe_graficos.recibir_datos)
 
         # Mostrar la página de bienvenida
         self.widget_apilado.setCurrentIndex(0)

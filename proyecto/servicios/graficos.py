@@ -1,7 +1,16 @@
 from servicios.analisis import *
 class Eda:
-
-    def col_hosp(figura):
+    from matplotlib.figure import Figure
+    from matplotlib.axes import Axes
+    def col_hosp(figura: Figure) -> Axes:
+        """
+        Docstring for col_hosp
+        
+        :param figura: Description
+        :type figura: Figure
+        :return: Description
+        :rtype: Axes
+        """
         col = 'hospitalizacion'
         # Recuperamos los datos
         df_col = Analisis.cadena_a_numero()
@@ -22,8 +31,17 @@ class Eda:
         ax.set_title('Distribución de los datos')
         return ax
     
-    def cols_num(figura, col):
-
+    def cols_num(figura: Figure, col: str) -> Axes:
+        """
+        Docstring for cols_num
+        
+        :param figura: Description
+        :type figura: Figure
+        :param col: Description
+        :type col: str
+        :return: Description
+        :rtype: Axes
+        """
         import pandas as pd
         # Recuperamos los datos
         df_col = Analisis.cadena_a_numero()
@@ -50,7 +68,20 @@ class Eda:
         return ax
     
 class GrafModelo:
-    def graf_muestra(y_test, y_pred, ax):
+    from matplotlib.axes import Axes
+    from pandas import Series
+    from numpy import ndarray
+    def graf_muestra(y_test: Series, y_pred: ndarray, ax: Axes):
+        """
+        Docstring for graf_muestra
+        
+        :param y_test: Description
+        :type y_test: Series
+        :param y_pred: Description
+        :type y_pred: ndarray
+        :param ax: Description
+        :type ax: Axes
+        """
         import seaborn as sns
         
         sns.scatterplot(x=y_test, y=y_pred, ax=ax)
@@ -63,12 +94,19 @@ class GrafModelo:
         return ax
 
 class EvaluacionGraf:
-    def matriz_conf(cm, ax):
+    from pandas import DataFrame
+    from numpy import ndarray
+    from matplotlib.axes import Axes
+    def matriz_conf(cm: ndarray, ax: Axes) -> Axes:
         """
         Docstring for matriz_conf
         
         :param cm: Description
+        :type cm: ndarray
         :param ax: Description
+        :type ax: Axes
+        :return: Description
+        :rtype: Axes
         """
         import seaborn as sns
 
@@ -82,14 +120,20 @@ class EvaluacionGraf:
 
         return ax
     
-    def curva_roc(fpr, tpr, curva, ax):
+    def curva_roc(fpr: ndarray, tpr: ndarray, curva: float, ax: Axes) -> Axes:
         """
         Docstring for curva_roc
         
         :param fpr: Description
+        :type fpr: ndarray
         :param tpr: Description
+        :type tpr: ndarray
         :param curva: Description
+        :type curva: float
         :param ax: Description
+        :type ax: Axes
+        :return: Description
+        :rtype: Axes
         """
         ax.plot(fpr, tpr, color='darkorange', lw=2, 
          label=f'ROC curve (AUC = {curva:.2f})')
@@ -105,7 +149,17 @@ class EvaluacionGraf:
 
         return ax
 
-    def logloss_clase(log_losses: list, ax):
+    def logloss_clase(log_losses: list[float], ax: Axes) -> Axes:
+        """
+        Docstring for logloss_clase
+        
+        :param log_losses: Description
+        :type log_losses: list[float]
+        :param ax: Description
+        :type ax: Axes
+        :return: Description
+        :rtype: Axes
+        """
         bars = ax.bar(['No', 'Sí'], log_losses, color='steelblue', alpha=0.7, 
                       edgecolor='black')
         
@@ -115,7 +169,7 @@ class EvaluacionGraf:
                     f'{loss:.4f}',
                     ha='center', va='bottom', fontsize=10)
         
-        ax.set_xlabel('Clases')
+        ax.set_xlabel('Hospitalización')
         ax.set_ylabel('Log Loss')
         ax.set_title('Log Loss por Clase', fontsize=14)
         ax.figure.subplots_adjust(left=0.15, bottom=0.25, right=0.95, top=0.85)
@@ -123,7 +177,17 @@ class EvaluacionGraf:
 
         return ax
 
-    def importancia_carac_rf(df, ax):
+    def importancia_carac(df: DataFrame, ax: Axes) -> Axes:
+        """
+        Docstring for importancia_carac
+        
+        :param df: Description
+        :type df: DataFrame
+        :param ax: Description
+        :type ax: Axes
+        :return: Description
+        :rtype: Axes
+        """
         ax.bar(df['características'], 
                 df['importancia'], 
                 color='green', alpha=0.8, edgecolor='black')
@@ -135,34 +199,26 @@ class EvaluacionGraf:
         
         return ax
     
-    def metricas_evals(metrica_entrenamiento, metrica_validacion, ax):
-        import numpy as np
-        # Graficar métricas de entrenamiento
-        ax.plot(metrica_entrenamiento, label='Entrenamiento', linewidth=2, color='blue', marker='o')
-        
-        # Graficar métricas de validación
-        ax.plot(metrica_validacion, label='Validación', linewidth=2, color='red', marker='s')
-        
-        # Añadir líneas de referencia
-        ax.axhline(y=min(metrica_entrenamiento), color='green', linestyle='--', alpha=0.7, 
-                    label='Mejor Entrenamiento')
-        ax.axhline(y=min(metrica_validacion), color='orange', linestyle='--', alpha=0.7, 
-                    label='Mejor Validación')
-        
-        # Añadir texto con mejor valor
-        best_train_idx = np.argmin(metrica_entrenamiento)
-        best_val_idx = np.argmin(metrica_validacion)
-        
-        ax.text(best_train_idx, min(metrica_entrenamiento), f'{min(metrica_entrenamiento):.4f}', 
-                color='green', fontsize=10, fontweight='bold')
-        ax.text(best_val_idx, min(metrica_validacion), f'{min(metrica_validacion):.4f}', 
-                color='orange', fontsize=10, fontweight='bold')
-        
-        ax.set_xlabel('Número de Iteraciones')
-        ax.set_ylabel('AUC')
-        ax.set_title('Métricas de Evaluación durante Entrenamiento - AUC', fontsize=14)
-        ax.figure.subplots_adjust(left=0.15, bottom=0.25, right=0.95, top=0.85)
-        ax.legend(loc='best', fontsize=11)
-        ax.grid(alpha=0.3)
 class Informes:
-    pass
+    from matplotlib.axes import Axes
+    def grafico_final(modelo_dict: dict, ax: Axes, nom: str):
+
+        modelo = modelo_dict['modelo']
+        X = modelo_dict['X_test']
+        if nom == 'LogisticRegression':
+            coefs = modelo.coef_[0]
+            columnas = Analisis.limpiar_errores().drop(columns='hospitalizacion').columns
+            ax.barh(columnas, coefs, color=['red' if c < 0 else 'blue' for c in coefs])
+            ax.axvline(0, color='black', linestyle='--')
+            ax.set_title("Impacto de las Variables (Coeficientes)")
+
+        elif nom == 'RandomForestClassifier':
+            from sklearn.tree import plot_tree
+            arbol = modelo.estimators_[-1]
+            plot_tree(arbol, feature_names=X.columns, filled=True, rounded=True, ax=ax)
+
+        elif nom == 'XGBClassifier':
+            import xgboost as xgb
+            xgb.plot_tree(modelo, num_trees=-1, rankdir='LR', ax=ax)
+
+        return ax

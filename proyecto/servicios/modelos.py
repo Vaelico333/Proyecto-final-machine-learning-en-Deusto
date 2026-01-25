@@ -1,12 +1,14 @@
 from servicios.analisis import *
 from servicios.trabajador import Trabajador, Decorador
 class Modelo():
-    def params(modelo) -> dict:
+    from pandas import DataFrame
+    from numpy import ndarray
+    def params(modelo: str) -> dict:
 
         parametros_reglog = {'penalty':['l1','l2','None'],
-                             'C':['0.001', '0.01', '0.1', '1.0'],
+                             'C':['0.01', '0.1', '1.0', '10'],
                              'solver':['liblinear','newton-cg','saga'],
-                             'max_iter':['10','50','100']}
+                             'max_iter':['100','500','1000']}
         
         parametros_bosque = {'n_estimators':['100','200'],
                              'max_depth':['5','10'],
@@ -49,15 +51,15 @@ class Modelo():
 
         scaler_X= StandardScaler()
         X_sc = scaler_X.fit_transform(X)
-        modelo_dicc['scaler_X'] = scaler_X
+        #modelo_dicc['scaler_X'] = scaler_X
         X_train, X_test, y_train, y_test = train_test_split(X_sc, y, random_state=17)
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
-        penalty = args[0][0] if args[0][0] != 'None' else None
-        C = float(args[0][1])
-        solver = args[0][2]
-        max_iter = int(args[0][3])
+        penalty = args[0] if args[0] != 'None' else None
+        C = float(args[1])
+        solver = args[2]
+        max_iter = int(args[3])
 
         modelo = LogisticRegression(penalty=penalty, C=C, solver=solver, max_iter=1)
         for n in range(1, max_iter+1):
@@ -96,7 +98,7 @@ class Modelo():
         lista_params.append(bool(args[-1]))
         modelo =  RandomForestClassifier(n_estimators=1, max_depth=lista_params[1], min_samples_split=lista_params[2],
                                     min_samples_leaf=lista_params[3], max_features=lista_params[4], bootstrap=lista_params[5], 
-                                    random_state=17, oob_score=True)
+                                    random_state=17)
         for n in range(1, control.total_pasos+1):
             modelo.n_estimators = n
             modelo.fit(X_train, y_train)
@@ -115,12 +117,12 @@ class Modelo():
         reporte = kwargs['reporte_progreso']
         control = kwargs['objeto_control']
 
-        params = []
+        parametros = []
         for n, arg in enumerate(args):
             if n in [0, 2, 3, 6, 7]:
-                params.append(int(arg))
+                parametros.append(int(arg))
             else:
-                params.append(float(arg))
+                parametros.append(float(arg))
 
         class BarraProgresoLlamada(xgboost.callback.TrainingCallback):
             def after_iteration(self, model, epoch, evals_log):
@@ -137,12 +139,17 @@ class Modelo():
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
-        modelo = XGBClassifier(kwargs=kwargs, n_estimators=control.total_pasos, callbacks=[BarraProgresoLlamada()])
-        modelo.fit(X_train, y_train)
+        modelo = XGBClassifier(n_estimators=control.total_pasos, learning_rate=parametros[1],
+                               max_depth=parametros[2], min_child_weight=parametros[3], 
+                               subsample=parametros[4], colsample_bytree=parametros[5], 
+                               reg_alpha=parametros[6], reg_lambda=parametros[7],
+                                callbacks=[BarraProgresoLlamada()], eval_metric='auc')
+        modelo.fit(X_train, y_train,
+                    eval_set=[(X_train, y_train), (X_test, y_test)])
         modelo_dicc['modelo'] = modelo
         return modelo_dicc
     
-    def gs_cv(nom, **kwargs):
+    def gs_cv(nom: str, **kwargs):
 
         from sklearn.experimental import enable_halving_search_cv
         from sklearn.model_selection import HalvingGridSearchCV
@@ -157,7 +164,6 @@ class Modelo():
         X = df.drop(columns='hospitalizacion')
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
-        modelo_dicc['mapa'] = mapa
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17)
         modelo_dicc['X_test'] = X_test
@@ -219,39 +225,164 @@ class Modelo():
             hgscv.fit(X_train, y_train)
 
         mejores = hgscv.best_params_
-        if nom == 'bosque':
-            mejores['oob_score'] = True
         print(mejores)
         modelo_final = mod(**mejores, random_state=17, n_jobs=-1)
         print('Entrenando el modelo final...')
-        modelo_final.fit(X_train, y_train)
+        if nom == 'xgb':
+            modelo_final = XGBClassifier(**mejores, random_state=17, n_jobs=-1, eval_metric='auc')
+            modelo_final.fit(X_train, y_train,
+                            eval_set=[(X_train, y_train), (X_test, y_test)])
+        else:
+            modelo_final.fit(X_train, y_train)
         print("Mejor modelo: ", modelo_final)
 
         modelo_dicc['modelo'] = modelo_final
         return modelo_dicc
 
-class Evaluacion:
-    def kpis(y_test, y_pred) -> dict:
 
+    def guardar_modelo(modelo: object, kpis: dict, X: DataFrame | ndarray) -> str:
+
+        import datetime
+        import os
+        import joblib
+        import xgboost
+        from pandas import DataFrame
+
+        print('iniciando conversión')
+        hora_actual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        nom_modelo = type(modelo).__name__
+
+        
+        nom_archivo_specs = f'specs_{nom_modelo}_{hora_actual}.txt'
+        url_archivo_specs = os.path.join(os.path.dirname(__file__), nom_archivo_specs)
+
+        print('parámetros cargados')
+        try:
+            if nom_modelo == 'XGBClassifier':
+                nom_archivo_modelo = f'{nom_modelo}_{hora_actual}.ubj'
+                url_archivo_modelo = os.path.join(os.path.dirname(__file__), nom_archivo_modelo)
+                parametros = modelo.get_xgb_params()
+                print('guardando modelo')
+                modelo.save_model(url_archivo_modelo)
+                print('comprobando modelo')
+                if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
+                    try:
+                        nuevo_modelo = xgboost.XGBClassifier()
+                        nuevo_modelo.load_model(url_archivo_modelo)
+                        mensaje = "El modelo se guardó correctamente y es válido."
+                    except Exception as e:
+                        mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
+                else:
+                    mensaje = f"Error: El archivo '{url_archivo_modelo}' no se encontró o está vacío."
+
+            elif nom_modelo == 'LogisticRegression' or nom_modelo == 'RandomForestClassifier':
+                nom_archivo_modelo = f'{nom_modelo}_{hora_actual}.pkl'
+                url_archivo_modelo = os.path.join(os.path.dirname(__file__), nom_archivo_modelo)
+                parametros = modelo.get_params()
+                print('guardando modelo')
+                joblib.dump(modelo, url_archivo_modelo)
+                print('comprobando modelo')
+                if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
+                    try:
+                        joblib.load(url_archivo_modelo)
+                        mensaje = "El modelo se guardó correctamente y es válido."
+                    except Exception as e:
+                        mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
+                else:
+                    mensaje = f"Error: El archivo '{url_archivo_modelo}' no se encontró o está vacío."
+
+            print('cargando specs')
+            specs = ''
+            specs += f'Parámetros del modelo {nom_modelo}:\n'
+            for k in parametros:
+                if parametros[k] is not None:
+                    specs += f'{k}: {parametros[k]}\n'
+            specs += f'\nIndicadores clave de rendimiento (KPIs):\n'
+            for k in kpis:
+                specs += f'{k}: {round(kpis[k], 4)}\n'
+            print('specs cargadas. Creando archivo')
+                
+            with open(url_archivo_specs, 'w', encoding='UTF-8') as f:
+                f.write(specs)
+
+        except Exception as e:
+            print(e)
+        print(mensaje)
+        return mensaje
+
+class Evaluacion:
+    from numpy import ndarray
+    from pandas import Series
+    from matplotlib.axes import Axes
+    def kpis(y_test: Series, y_pred: ndarray) -> dict:
+        """
+        Docstring for kpis
+        
+        :param y_test: Description
+        :type y_test: Series
+        :param y_pred: Description
+        :type y_pred: ndarray
+        :return: Description
+        :rtype: dict
+        """
         from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
         import numpy as np
+        
         kpis = {}
         punteria = accuracy_score(y_test, y_pred)
-        kpis['Puntería'] = punteria
+        kpis['Exactitud'] = punteria
         precision = precision_score(y_test, y_pred, zero_division=np.nan)
         kpis['Precisión'] = precision
         llamada = recall_score(y_test, y_pred, zero_division=np.nan)
-        kpis['Llamada'] = llamada
+        kpis['Sensibilidad'] = llamada
         f1 = f1_score(y_test, y_pred, zero_division=np.nan)
         kpis['F1'] = f1
-        return kpis
 
-    def reglog_eval():
-        '''Matriz de confusion, log loss por clase y curva roc'''
-        pass
-    def bosque_eval():
-        '''matriz, importancia de caracteristicas y oob'''
-        pass
-    def xgb_eval():
-        '''matriz, importancia de caracteristicas y métricas de evaluación'''
-        pass
+        return kpis
+    
+    def eval_modelo(modelo_dict: dict, axes: list[Axes], nom: str) -> tuple [tuple[Axes], dict]:
+        """
+        Docstring for eval_modelo
+        
+        :param modelo_dict: Description
+        :type modelo_dict: dict
+        :param axes: Description
+        :type axes: list[Axes]
+        :param nom: Description
+        :type nom: str
+        :return: Description
+        :rtype: tuple [tuple [Axes], dict]
+        """
+        from servicios.graficos import EvaluacionGraf as eg
+
+        ax_sup, ax_med, ax_inf = axes
+
+        if nom == 'LogisticRegression':
+            metricas = {}
+            cm =  Analisis.confusion_matrix_modelo(modelo_dict)
+            ax_sup = eg.matriz_conf(cm, ax_sup)
+
+            log_losses = Analisis.log_loss_modelo(modelo_dict)
+            metricas['log_losses'] = log_losses
+            ax_med = eg.logloss_clase(log_losses, ax_med)
+
+            roc_auc = Analisis.roc_auc_modelo(modelo_dict)
+            metricas['auc'] = roc_auc[2]
+            ax_inf = eg.curva_roc(*roc_auc, ax_inf)
+
+            return (ax_sup, ax_med, ax_inf), metricas
+
+        elif nom == 'RandomForestClassifier' or nom == 'XGBClassifier':
+            metricas = {}
+            cm =  Analisis.confusion_matrix_modelo(modelo_dict)
+            ax_sup = eg.matriz_conf(cm, ax_sup)
+
+            import_carac_df = Analisis.importancia_caracteristicas_modelo(modelo_dict)
+            metricas['importancia_carac'] = import_carac_df
+            ax_med = eg.importancia_carac(import_carac_df, ax_med)
+
+            roc_auc = Analisis.roc_auc_modelo(modelo_dict)
+            metricas['auc'] = roc_auc[2]
+            ax_inf = eg.curva_roc(*roc_auc, ax_inf)
+
+            return (ax_sup, ax_med, ax_inf), metricas

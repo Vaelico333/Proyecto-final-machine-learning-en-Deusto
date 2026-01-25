@@ -89,6 +89,7 @@ class Trabajador(QRunnable):
 
     @pyqtSlot()
     def run(self):
+        import traceback
         stdout_original = sys.stdout
         if self.capturador:
             sys.stdout = self.capturador 

@@ -1,6 +1,5 @@
 import sys
 import re
-import traceback
 from PyQt5.QtCore import QObject, pyqtSignal, QRunnable, pyqtSlot
 
 class ControlEntrenamiento:

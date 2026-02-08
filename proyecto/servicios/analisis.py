@@ -73,112 +73,102 @@ class Analisis():
 
     def cadena_a_numero(df: DataFrame = DataFrame(), cols: list = None, modo: str = 'num') -> DataFrame:
         """
-        Convierte las columnas con medidas de cadena de caracteres a número de coma flotante, 
-        elimina el nombre de la unidad y 
-        homogeneiza los datos convirtiendo a las unidades estándar.
+        Docstring for cadena_a_numero
         
-        :param df: DataFrame de pandas a modificar.
+        :param df: Description
         :type df: DataFrame
-        :param col: Nombre de las columnas a transformar.
-        :type col: tuple
-        :param modo: Indica qué se retornará: todos los datos (total), sólo la columna (columna) o sólo los nuevos datos (num).
+        :param cols: Description
+        :type cols: list
+        :param modo: Description
         :type modo: str
-        :return: DataFrame modificado.
+        :return: Description
         :rtype: DataFrame
         """
         import pandas as pd
-        # Creamos un diccionario para otorgar una nueva columna numérica 
-        # por cada vieja columna categórica
-        columnas = {
-            'peso':'peso_kg',
-            'altura':'altura_m',
-            'glucosa':'glucosa_mg_dL',
-            'presion_arterial':'presion_sistolica'}
-        
-        # Dos listas: una contiene las unidades objetivo, y la otra las no deseadas
-        unidades_estandar = ['kg', 'mg/dL']
-        unidades_no_estandar = ['lb', 'cm', 'inch', 'mmol/L']
-
-        # Factores para convertir de libras a kg, cm a m, pulgadas a m y mmol/L a mg/dL
-        factores_conversion = {
-            'lb' :  '/0.45359237',
-            'cm' : '/100',
-            'inch' : '*0.0254',
-            'mmol/L' : '*17.5 +3.75'}
+        import numpy as np
 
         if df.empty:
             df = Leer_Datos.abrir_csv()
 
+        # Mapeo de nuevas columnas
+        mapeo_cols = {
+            'peso': 'peso_kg',
+            'altura': 'altura_m',
+            'glucosa': 'glucosa_mg_dL',
+            'presion_arterial': 'presion_sistolica'
+        }
+        # Diccionario de conversión: (factor_multiplicador, termino_a_eliminar)
+        conversiones = {
+            'lb': (0.453592, 'lb'),
+            'cm': (0.01, 'cm'),
+            'inch': (0.0254, 'inch'),
+            'mmol/l': (18.01, 'mmol/l'),
+            'kg': (1.0, 'kg'),
+            'mg/dl': (1.0, 'mg/dl')
+                }
+        def procesar_valor(val):
+            try:
+                for unidad, (factor, sufijo) in conversiones.items():
+                    if unidad in val:
+                        num = float(val.replace(sufijo, '').strip())
+                        return round(num * factor, 2)
+                return float(val) # Si no tiene unidad, intenta convertir a float
+            except:
+                return np.nan
+            
+        # Si no se pasan columnas, usamos las que están en nuestro mapeo y existan en el df
         if not cols:
-            cols = list(df.columns)
-        # Contamos cuántas veces aparece una unidad estándar y cuántas una no estándar 
-        # la idea es usarlo solo cuando sea una columna y no un DF completo
-        estandar = 0
-        no_estandar = 0
-        # Comprobamos que las columnas solicitadas sean de las convertibles, 
-        # y si no lo son, terminamos la función y devolvemos False
-        for col in cols:
-            if col not in columnas.keys():
-                continue
-            
-            # Nos aseguramos de convertir todo a cadena de caracteres para 
-            # evitar problemas con NaN y 0 introducidos como errores
-            df[columnas[col]] = df[col] #.astype(str)
-            
-            # Esta lista contendrá la columna ya convertida en numérica
-            valores_finales = []
-            # Presión arterial tiene un formato especial, y requiere otro tratamiento
-            if col == 'presion_arterial':
-                for valor in df[columnas[col]]:
-                    valor = str(valor)
-                    valor_limpio = valor.split('/')[0] # Cogemos el número que va antes de la barra, ya que es la presión sistólica y es más representativo
-                    valores_finales.append(valor_limpio)
-            else:
-                for valor in df[columnas[col]]: # Iteramos por la columna
-                        valor = str(valor)
-                        agregado = False # Creamos una "flag" que nos indique si ya se ha agregado un dato
-                        if not agregado:
-                            for unidad in unidades_estandar: # Si la unidad es estándar, le quitamos la unidad, lo convertimos en float y lo agregamos directamente
-                                    if unidad in valor:
-                                        valor_limpio = valor.replace(f' {unidad}', '')
-                                        valores_finales.append(valor_limpio)
-                                        agregado = True
-                                        estandar += 1
-                                        break
-                        if not agregado:
-                            for unidad in unidades_no_estandar: # Si no es estándar:
-                                    if unidad in valor: # Si el dato contiene la unidad, así evitamos 0 y NaN
-                                        valor_num = valor.replace(f' {unidad}', '') # Le quitamos la unidad
-                                        # Usando otra función, convertimos a la unidad correspondiente
-                                        valor_limpio = round(Analisis.operacion_str(float(valor_num), *factores_conversion[unidad].split()), 2)
-                                        valores_finales.append(valor_limpio)
-                                        agregado = True
-                                        no_estandar += 1
-                                        break
-                        if not agregado:
-                            valores_finales.append(valor)
-            df[columnas[col]] = valores_finales
-            df[columnas[col]] = df[columnas[col]].astype(float)
+            cols = [c for c in df.columns if c in mapeo_cols or c == 'IMC']
 
-        # Defino 3 modos: 
-        if modo == 'total': # Para retornar tanto datos sin transformar como transformados, en el mismo DF
-            return df
-        elif modo == 'num': # Para retornar solamente los datos transformados
-            df_num = pd.DataFrame()
-            for df_col in df.columns:
-                if df_col not in columnas.keys():
-                    df_num[df_col] = df[df_col]
-                elif df_col in columnas.keys():
-                    df.drop(columns=df_col)
-            df_num.drop(columns='id', inplace=True)
-            return df_num
-        elif modo == 'columna': # Para retornar una columna concreta
-            for col in cols:
-                if col in columnas.keys():
-                    return pd.DataFrame(df[columnas[col]]), [estandar, no_estandar]
-                elif col not in columnas.keys():
-                    df = Leer_Datos.abrir_csv()
-                    return pd.DataFrame(df[col]), [estandar, no_estandar]
+        df_res = df.copy()
+
+        for col in cols:
+            # Calculamos IMC basándonos en las columnas ya transformadas o existentes
+            # Nota: Asegurarse de que altura esté en metros
+            
+            p = df_res['peso'].apply(procesar_valor)
+            a = df_res['altura'].apply(procesar_valor)
+            a, p = a.replace(0, np.nan), p.replace(0, np.nan)
+            media_a, media_p = a.mean(), p.mean()
+            a, p = a.fillna(media_a), p.fillna(media_p)
+            df_res['IMC'] = pd.to_numeric(p) / (pd.to_numeric(a)**2)
+            
+
+            if col not in mapeo_cols:
+                continue
+
+            nueva_col = mapeo_cols[col]
+            
+            # Limpieza inicial: convertir a string y manejar nulos
+            serie = df_res[col].astype(str).str.lower().str.strip()
+
+            if col == 'presion_arterial':
+                # Extraer solo la sistólica (antes del /)
+                df_res[nueva_col] = serie.str.split('/').str[0].astype(float)
+            
+            else:
+                df_res[nueva_col] = serie.apply(procesar_valor)
+
+        # Lógica de retorno según modo
+        if modo == 'total':
+            return df_res
+        
+        elif modo == 'num':
+            # Retorna columnas originales no mapeadas + las nuevas transformadas
+            cols_a_mantener = [c for c in df_res.columns if c not in mapeo_cols.keys()]
+            cols_a_mantener.remove('id') # Quitamos la columna id para no confundir a los modelos
+            cols_a_mantener.remove('peso_kg')
+            cols_a_mantener.remove('altura_m')
+            return df_res[cols_a_mantener]
+        
+        elif modo == 'columna':
+            # Retorna solo las nuevas columnas creadas en este proceso
+            nuevas = [v for k, v in mapeo_cols.items() if k in cols]
+            if 'IMC' in cols: nuevas.append('IMC')
+            return df_res[nuevas]
+
+        return df_res
+
                             
                   
     
@@ -195,30 +185,47 @@ class Analisis():
         :return: Description
         :rtype: DataFrame
         """
-
+        import numpy as np
         if df.empty:
             df = Analisis.cadena_a_numero()
+
+        # Identificar columnas numéricas para evitar errores de tipo
+        columnas_numericas = df.select_dtypes(include=[np.number]).columns
+
         if not cols:
-            for col in df.columns:
-                if df[col].dtype == float or df[col].dtype == int: # Si el dtype es numérico, evitamos modificar hospitalización
-                    df[col] = df[col].fillna(value=df[col].mean()) # Reemplazamos NaN por la media de valores
-                    df[col] = df[col].replace(to_replace=0, value=df[col].mean()) # Reemplazamos 0 por la media de valores
-                    df[col] = [round(num, 2) for num in df[col]] # Redondeamos al 2º decimal
-                    df.loc[df[col]<0, col] *= -1 # Si el dato es negativo, lo volvemos positivo
+            for col in columnas_numericas:
+                # Convertimos negativos a positivos primero
+                df[col] = df[col].abs()
+                
+                # Calculamos la media de valores > 0 para que sea un promedio real
+                valores_validos = df.loc[df[col] > 0, col]
+                media = valores_validos.mean() if not valores_validos.empty else 0
+                
+                # Reemplazamos NaN y 0 por la media calculada
+                df[col] = df[col].replace(0, np.nan).fillna(media)
+                
+                # Redondeo eficiente
+                df[col] = df[col].round(2)
             return df
         
-        if modo == 'columna' and cols:
-            num_no_nan = df.count() # Contamos los valores no nulos
-            num_nan = len(df) - num_no_nan # Restamos para extraer los valores nulos
-            num_cero = len(df[df[cols] == 0]) # Filtramos para encontrar el número de datos con valor 0
-            num_neg = len(df[df[cols] < 0]) # Filtramos para sacar los valores negativos
+        # Modo columna (cuando se especifica una columna concreta)
+        if modo == 'columna' and cols in df.columns:
+            # Estadísticas previas
+            num_nan = df[cols].isna().sum()
+            num_cero = (df[cols] == 0).sum()
+            num_neg = (df[cols] < 0).sum()
 
-            df[cols] = df[cols].fillna(value=df[cols].mean()) # Reemplazamos NaN por la media de valores
-            df[cols] = df[cols].replace(to_replace=0, value=df[cols].mean()) # Reemplazamos 0 por la media de valores
-            df[cols] = [round(num, 2) for num in df[cols]] # Redondeamos al 2º decimal
-            df.loc[df[cols] < 0, cols] *= -1 # Si el dato es negativo, lo volvemos positivo
-            return df[cols], (num_nan[cols], num_cero, num_neg)
+            # Limpieza
+            df[cols] = df[cols].abs()
+            valores_validos = df.loc[df[cols] > 0, cols]
+            media = valores_validos.mean() if not valores_validos.empty else 0
+            
+            df[cols] = df[cols].replace(0, np.nan).fillna(media).round(2)
+            
+            return df[cols], (int(num_nan), int(num_cero), int(num_neg))
 
+        return df
+    
     def log_loss_modelo(modelo_dict: dict) -> list[float]:
         """
         Docstring for log_loss_modelo

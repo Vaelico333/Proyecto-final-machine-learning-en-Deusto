@@ -1,28 +1,29 @@
-from servicios.analisis import *
-from servicios.trabajador import Trabajador, Decorador
+from servicios.analisis import Analisis
+from servicios.trabajador import Decorador
 class Modelo():
     from pandas import DataFrame
     from numpy import ndarray
     def params(modelo: str) -> dict:
 
-        parametros_reglog = {'penalty':['l1','l2','None'],
+        import numpy as np
+        parametros_reglog = {'l1_ratio':['1.0','0.5','0'],
                              'C':['0.01', '0.1', '1.0', '10'],
                              'solver':['liblinear','newton-cg','saga'],
-                             'max_iter':['100','500','1000']}
+                             'max_iter':['100','1000','10000']}
         
         parametros_bosque = {'n_estimators':['100','200'],
                              'max_depth':['5','10'],
                              'min_samples_split':['10','25','50'],
                              'min_samples_leaf':['1','5','10','20'],
-                             'max_features':['3','5','9','12'],
+                             'max_features':['1', '3', '5'],
                              'bootstrap':['True','False']}
         
-        parametros_xgb = {'n_estimators':['100','200'],
-                          'learning_rate':['0.01', '0.1', '0.2', '0.3'],
+        parametros_xgb = {'n_estimators':['100','300'],
+                          'learning_rate':['0.05','0.15', '0.3'],
                           'max_depth':['5','7'],
-                          'min_child_weight':['1','3','5','7'],
-                          'subsample':['0.6', '0.7', '0.8', '0.9'],
-                          'colsample_bytree':['0.6', '0.7', '0.8', '0.9'],
+                          'min_child_weight':['1','3'],
+                          'subsample':['0.6','0.9'],
+                          'colsample_bytree':['0.6','0.9'],
                           'reg_alpha':['0','1'],
                           'reg_lambda':['0','1']}
         
@@ -32,7 +33,6 @@ class Modelo():
         
         return eval(switch[modelo])
     
-
     @Decorador.progreso
     def reglog(*args, **kwargs):
 
@@ -51,17 +51,16 @@ class Modelo():
 
         scaler_X= StandardScaler()
         X_sc = scaler_X.fit_transform(X)
-        #modelo_dicc['scaler_X'] = scaler_X
         X_train, X_test, y_train, y_test = train_test_split(X_sc, y, random_state=17)
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
-        penalty = args[0] if args[0] != 'None' else None
+        l1_ratio = float(args[0]) if args[0] != 'None' else None
         C = float(args[1])
         solver = args[2]
         max_iter = int(args[3])
 
-        modelo = LogisticRegression(penalty=penalty, C=C, solver=solver, max_iter=1)
+        modelo = LogisticRegression(l1_ratio=l1_ratio, C=C, solver=solver, max_iter=1, class_weight='balanced')
         for n in range(1, max_iter+1):
             modelo.fit(X_train, y_train)
             reporte(n)
@@ -98,7 +97,7 @@ class Modelo():
         lista_params.append(bool(args[-1]))
         modelo =  RandomForestClassifier(n_estimators=1, max_depth=lista_params[1], min_samples_split=lista_params[2],
                                     min_samples_leaf=lista_params[3], max_features=lista_params[4], bootstrap=lista_params[5], 
-                                    random_state=17)
+                                    random_state=17, warm_start=True)
         for n in range(1, control.total_pasos+1):
             modelo.n_estimators = n
             modelo.fit(X_train, y_train)
@@ -143,7 +142,7 @@ class Modelo():
                                max_depth=parametros[2], min_child_weight=parametros[3], 
                                subsample=parametros[4], colsample_bytree=parametros[5], 
                                reg_alpha=parametros[6], reg_lambda=parametros[7],
-                                callbacks=[BarraProgresoLlamada()], eval_metric='auc')
+                                callbacks=[BarraProgresoLlamada()], eval_metric='auc', early_stopping_rounds=10)
         modelo.fit(X_train, y_train,
                     eval_set=[(X_train, y_train), (X_test, y_test)])
         modelo_dicc['modelo'] = modelo
@@ -171,7 +170,7 @@ class Modelo():
 
         parametros = Modelo.params(nom)
 
-        floats = ['C', 'learning_rate','subsample','colsample_bytree']
+        floats = ['l1_ratio','C', 'learning_rate','subsample','colsample_bytree']
         enteros = ['max_iter', 'n_estimators', 'max_depth','min_samples_split', 'min_samples_leaf','max_features',
                     'min_child_weight','reg_alpha','reg_lambda']
         booleanos = ['bootstrap']
@@ -225,13 +224,14 @@ class Modelo():
             hgscv.fit(X_train, y_train)
 
         mejores = hgscv.best_params_
-        print(mejores)
         modelo_final = mod(**mejores, random_state=17, n_jobs=-1)
-        print('Entrenando el modelo final...')
         if nom == 'xgb':
-            modelo_final = XGBClassifier(**mejores, random_state=17, n_jobs=-1, eval_metric='auc')
+            modelo_final = XGBClassifier(**mejores, random_state=17, n_jobs=-1, eval_metric='auc', early_stopping_rounds=10, gamma=0.2)
             modelo_final.fit(X_train, y_train,
                             eval_set=[(X_train, y_train), (X_test, y_test)])
+        elif nom == 'reglog':
+            modelo_final = LogisticRegression(**mejores, random_state=17, n_jobs=-1, class_weight='balanced')
+            modelo_final.fit(X_train, y_train)
         else:
             modelo_final.fit(X_train, y_train)
         print("Mejor modelo: ", modelo_final)
@@ -246,9 +246,8 @@ class Modelo():
         import os
         import joblib
         import xgboost
-        from pandas import DataFrame
+        import sklearn
 
-        print('iniciando conversión')
         hora_actual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         nom_modelo = type(modelo).__name__
 
@@ -256,57 +255,52 @@ class Modelo():
         nom_archivo_specs = f'specs_{nom_modelo}_{hora_actual}.txt'
         url_archivo_specs = os.path.join(os.path.dirname(__file__), nom_archivo_specs)
 
-        print('parámetros cargados')
-        try:
-            if nom_modelo == 'XGBClassifier':
-                nom_archivo_modelo = f'{nom_modelo}_{hora_actual}.ubj'
-                url_archivo_modelo = os.path.join(os.path.dirname(__file__), nom_archivo_modelo)
-                parametros = modelo.get_xgb_params()
-                print('guardando modelo')
-                modelo.save_model(url_archivo_modelo)
-                print('comprobando modelo')
-                if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
-                    try:
-                        nuevo_modelo = xgboost.XGBClassifier()
-                        nuevo_modelo.load_model(url_archivo_modelo)
-                        mensaje = "El modelo se guardó correctamente y es válido."
-                    except Exception as e:
-                        mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
-                else:
-                    mensaje = f"Error: El archivo '{url_archivo_modelo}' no se encontró o está vacío."
+        if nom_modelo == 'XGBClassifier':
+            nom_archivo_modelo = f'{nom_modelo}_{hora_actual}.ubj'
+            url_archivo_modelo = os.path.join(os.path.dirname(__file__), nom_archivo_modelo)
+            parametros = modelo.get_xgb_params()
+            modelo.save_model(url_archivo_modelo)
+            if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
+                try:
+                    nuevo_modelo = xgboost.XGBClassifier()
+                    nuevo_modelo.load_model(url_archivo_modelo)
+                    mensaje = "El modelo se guardó correctamente y es válido."
+                except Exception as e:
+                    mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
+            else:
+                mensaje = f"Error: El archivo '{url_archivo_modelo}' no se encontró o está vacío."
 
-            elif nom_modelo == 'LogisticRegression' or nom_modelo == 'RandomForestClassifier':
-                nom_archivo_modelo = f'{nom_modelo}_{hora_actual}.pkl'
-                url_archivo_modelo = os.path.join(os.path.dirname(__file__), nom_archivo_modelo)
-                parametros = modelo.get_params()
-                print('guardando modelo')
-                joblib.dump(modelo, url_archivo_modelo)
-                print('comprobando modelo')
-                if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
-                    try:
-                        joblib.load(url_archivo_modelo)
-                        mensaje = "El modelo se guardó correctamente y es válido."
-                    except Exception as e:
-                        mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
-                else:
-                    mensaje = f"Error: El archivo '{url_archivo_modelo}' no se encontró o está vacío."
+        elif nom_modelo == 'LogisticRegression' or nom_modelo == 'RandomForestClassifier':
+            nom_archivo_modelo = f'{nom_modelo}_{hora_actual}.pkl'
+            url_archivo_modelo = os.path.join(os.path.dirname(__file__), nom_archivo_modelo)
+            parametros = modelo.get_params()
+            joblib.dump(modelo, url_archivo_modelo)
+            if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
+                try:
+                    joblib.load(url_archivo_modelo)
+                    mensaje = "El modelo se guardó correctamente y es válido."
+                except Exception as e:
+                    mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
+            else:
+                mensaje = f"Error: El archivo '{url_archivo_modelo}' no se encontró o está vacío."
 
-            print('cargando specs')
-            specs = ''
-            specs += f'Parámetros del modelo {nom_modelo}:\n'
-            for k in parametros:
-                if parametros[k] is not None:
-                    specs += f'{k}: {parametros[k]}\n'
-            specs += f'\nIndicadores clave de rendimiento (KPIs):\n'
-            for k in kpis:
-                specs += f'{k}: {round(kpis[k], 4)}\n'
-            print('specs cargadas. Creando archivo')
-                
-            with open(url_archivo_specs, 'w', encoding='UTF-8') as f:
-                f.write(specs)
+        specs = ''
+        specs += f'Parámetros del modelo {nom_modelo}:\n'
+        for k in parametros:
+            if parametros[k] is not None:
+                specs += f'{k}: {parametros[k]}\n'
+        specs += f'\nIndicadores clave de rendimiento (KPIs):\n'
+        for k in kpis:
+            specs += f'{k}: {round(kpis[k], 4)}\n'
 
-        except Exception as e:
-            print(e)
+        if nom_modelo == 'LogisticRegression' or nom_modelo == 'RandomForestClassifier':
+            specs += f'\nVersión de Scikit-Learn: {sklearn.__version__}'
+        elif nom_modelo == 'XGBClassifier':
+            specs += f'\nVersión de XGBoost: {xgboost.__version__}'
+            
+        with open(url_archivo_specs, 'w', encoding='UTF-8') as f:
+            f.write(specs)
+
         print(mensaje)
         return mensaje
 
@@ -360,6 +354,7 @@ class Evaluacion:
         if nom == 'LogisticRegression':
             metricas = {}
             cm =  Analisis.confusion_matrix_modelo(modelo_dict)
+            metricas['matriz_confusion'] =  cm
             ax_sup = eg.matriz_conf(cm, ax_sup)
 
             log_losses = Analisis.log_loss_modelo(modelo_dict)
@@ -375,6 +370,7 @@ class Evaluacion:
         elif nom == 'RandomForestClassifier' or nom == 'XGBClassifier':
             metricas = {}
             cm =  Analisis.confusion_matrix_modelo(modelo_dict)
+            metricas['matriz_confusion'] =  cm
             ax_sup = eg.matriz_conf(cm, ax_sup)
 
             import_carac_df = Analisis.importancia_caracteristicas_modelo(modelo_dict)

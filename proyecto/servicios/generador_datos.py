@@ -18,16 +18,16 @@ class Generador_Datos():
         hospitalizacion = 0
         # En base al índice de masa corporal: un peso muy bajo o muy alto puede ser de riesgo
         if 'kg' in paciente['peso']: 
-            peso = float(paciente['peso'].strip(' kg'))
+            peso_kg = float(paciente['peso'].strip(' kg'))
         elif 'lb' in paciente['peso']:
-            peso = float(paciente['peso'].strip(' lb')) * 0.45359237
+            peso_kg = float(paciente['peso'].strip(' lb')) * 0.45359237
 
         if 'cm' in paciente['altura']:
             altura_m = float(paciente['altura'].strip(' cm')) /100
         elif 'inch' in paciente['altura']:
             altura_m = float(paciente['altura'].strip(' inch')) * 2.54 /100
     
-        imc = peso / altura_m**2
+        imc = peso_kg / altura_m**2
 
         if imc < imc_rango[0] or imc > imc_rango[1]:
             hospitalizacion += 1
@@ -108,16 +108,16 @@ class Generador_Datos():
             # El centro de la distribución será 80 kg
             # 1 lb = 0.45359237 kg
             # 1 lb = 1/2.20462 kg
-            peso_kg = str(round(np.random.normal(80, 15), 2)) + ' kg'
-            peso_lb = str(round(np.random.normal(36.28, 8), 2)) + ' lb'
+            peso_kg = str(round(np.random.normal(80, 6), 2)) + ' kg'
+            peso_lb = str(round(np.random.normal(36.28, 3), 2)) + ' lb'
             paciente['peso'] = random.choice([peso_kg, peso_lb])
 
             # Altura: habrá valores en cm y pulgadas
             # El centro de la distribución será 170 cm
             # 1 inch = cm * 2.54
             # 1 cm = 0.3937 * inch
-            altura_cm = str(round(np.random.normal(170, 20))) + ' cm'
-            altura_inch = str(round(np.random.normal(67, 7.89))) + ' inch'
+            altura_cm = str(round(np.random.normal(160, 8))) + ' cm'
+            altura_inch = str(round(np.random.normal(62, 3.89))) + ' inch'
             paciente['altura'] = random.choice([altura_cm, altura_inch])
 
             # IMC: peso en kg / (altura en m)^2
@@ -136,8 +136,8 @@ class Generador_Datos():
             # El centro de la distribución será 180 mg/dL
             # el estándar en España es mg/dl, así que es el que usaré
             # Fórmula: Y(mg/dl) = 17,5 * X(mmol/l) + 3,75
-            glucosa_mg = str(round(np.random.normal(190, 45), 2)) + ' mg/dL'
-            glucosa_mmol = str(round(np.random.normal(10, 2.36), 2)) + ' mmol/L'
+            glucosa_mg = str(round(np.random.normal(190, 55), 2)) + ' mg/dL'
+            glucosa_mmol = str(round(np.random.normal(10, 3.36), 2)) + ' mmol/L'
             paciente['glucosa'] = random.choice([glucosa_mg, glucosa_mmol])
 
             # Hospitalización: en base a criterios médicos, cuando un paciente se sale
@@ -147,15 +147,15 @@ class Generador_Datos():
             # Si la edad es baja o alta, cambian las condiciones de hospitalización:
             # <20 años: IMC<15 | IMC>40, GLUC<70 | GLUC>400, TEN>=180/110
             if paciente['edad'] < 20:
-                hospitalizacion = Generador_Datos.condicion_hosp(paciente, imc_rango=[15,40], gluc_rango=[70,400], ten_sis=180)
+                hospitalizacion = Generador_Datos.condicion_hosp(paciente, imc_rango=[13,43], gluc_rango=[70,400], ten_sis=180)
 
             # 20< años <60: IMC<15 | IMC>40, GLUC<54 | GLUC>450, TEN>=180/110
             elif 20 < paciente['edad'] < 60:
-                hospitalizacion = Generador_Datos.condicion_hosp(paciente, imc_rango=[15,40], gluc_rango=[54,450], ten_sis=180)
+                hospitalizacion = Generador_Datos.condicion_hosp(paciente, imc_rango=[13,43], gluc_rango=[54,450], ten_sis=180)
 
             # >60 años: IMC<15 | IMC>40, GLUC<70 | GLUC>300, TEN>=180/110
             else:
-                hospitalizacion = Generador_Datos.condicion_hosp(paciente, imc_rango=[15,40], gluc_rango=[70,300], ten_sis=180)
+                hospitalizacion = Generador_Datos.condicion_hosp(paciente, imc_rango=[13,43], gluc_rango=[70,300], ten_sis=180)
 
             # Introducción de errores: de manera aleatoria, introducción 
             # de valores negativos, 0, NaN o sin cambios.

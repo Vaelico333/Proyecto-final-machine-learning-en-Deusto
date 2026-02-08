@@ -1,4 +1,4 @@
-from servicios.analisis import *
+from servicios.analisis import Analisis
 class Eda:
     from matplotlib.figure import Figure
     from matplotlib.axes import Axes
@@ -89,7 +89,6 @@ class GrafModelo:
         ax.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='green')
         ax.set_xlabel('Datos reales')
         ax.set_ylabel('Datos predichos')
-        ax.set_title('Regresión logística de hospitalización de pacientes')
         
         return ax
 
@@ -138,7 +137,7 @@ class EvaluacionGraf:
         ax.plot(fpr, tpr, color='darkorange', lw=2, 
          label=f'ROC curve (AUC = {curva:.2f})')
         ax.plot([0, 1], [0, 1], color='steelblue', lw=2, linestyle='--', 
-                label='Modelo')
+                label='Referencia de azar')
         ax.set_xlim([0.0, 1.0])
         ax.set_ylim([0.0, 1.05])
         ax.set_xlabel('Ratio de falsos positivos')
@@ -171,7 +170,7 @@ class EvaluacionGraf:
         
         ax.set_xlabel('Hospitalización')
         ax.set_ylabel('Log Loss')
-        ax.set_title('Log Loss por Clase', fontsize=14)
+        ax.set_title('Pérdida logarítmica por clase', fontsize=14)
         ax.figure.subplots_adjust(left=0.15, bottom=0.25, right=0.95, top=0.85)
         ax.set_ylim(0, max(log_losses) * 1.15) 
 
@@ -192,17 +191,20 @@ class EvaluacionGraf:
                 df['importancia'], 
                 color='green', alpha=0.8, edgecolor='black')
         
-        ax.set_xlabel('Importancia de Característica')
-        ax.set_ylabel('Características')
+        ax.set_ylabel('Importancia')
+        ax.set_xlabel('Características')
         ax.set_title('Importancia de Características', fontsize=14)
-        ax.figure.subplots_adjust(left=0.15, bottom=0.25, right=0.95, top=0.85)
+        ax.tick_params(axis='x', labelrotation=15)
+        ax.figure.subplots_adjust(left=0.15, bottom=0.35, right=0.95, top=0.85)
         
         return ax
     
 class Informes:
     from matplotlib.axes import Axes
+    
     def grafico_final(modelo_dict: dict, ax: Axes, nom: str):
 
+        import matplotlib.pyplot as plt
         modelo = modelo_dict['modelo']
         X = modelo_dict['X_test']
         if nom == 'LogisticRegression':
@@ -215,10 +217,11 @@ class Informes:
         elif nom == 'RandomForestClassifier':
             from sklearn.tree import plot_tree
             arbol = modelo.estimators_[-1]
-            plot_tree(arbol, feature_names=X.columns, filled=True, rounded=True, ax=ax)
+            plot_tree(arbol, feature_names=X.columns, label='root', impurity=False, filled=True, rounded=True, ax=ax, fontsize=5)
 
         elif nom == 'XGBClassifier':
             import xgboost as xgb
-            xgb.plot_tree(modelo, num_trees=-1, rankdir='LR', ax=ax)
+            plt.rcParams.update({'font.size': 12}) 
+            xgb.plot_tree(modelo, tree_idx=-1, rankdir='LR', ax=ax, condition_node_params={'fontsize':'20'}, leaf_node_params={'fontsize':'20'})
 
         return ax

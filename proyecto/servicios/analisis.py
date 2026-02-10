@@ -1,6 +1,7 @@
 from servicios.generador_datos import Generador_Datos 
 class Leer_Datos:
     import pandas as pd
+    @staticmethod
     def abrir_csv(url: str = 'datos_forjados.csv') -> pd.DataFrame:
         """
         Abre el archivo CSV especificado en el mismo directorio o un subdirectorio del actual,
@@ -22,6 +23,7 @@ class Leer_Datos:
             df = Leer_Datos.abrir_csv()
         return df
     
+    @staticmethod
     def muestra_df(url: str = 'datos_forjados.csv', df = pd.DataFrame()) -> pd.DataFrame | pd.Series:
         """
         Docstring for muestra_df
@@ -40,8 +42,9 @@ class Leer_Datos:
         return df_muestra
     
 class Analisis():
-    from pandas import DataFrame
+    from pandas import DataFrame, Series
     from numpy import ndarray
+    @staticmethod
     def operacion_str(num: float, *args) -> float:
         """
         Ejecuta la operación u operaciones contenidas en args sobre num.
@@ -71,17 +74,18 @@ class Analisis():
             num = operadores[operacion](num, float(numero))
         return num
 
+    @staticmethod
     def cadena_a_numero(df: DataFrame = DataFrame(), cols: list = None, modo: str = 'num') -> DataFrame:
         """
-        Docstring for cadena_a_numero
+        Transforma un DataFrame que contiene cadena de caracteres que incluyen una cifra y la magnitud a una columna nueva que sólo incluye la cifra, y estandariza dicha cifra a una magnitud común.
         
-        :param df: Description
+        :param df: Dataframe a tranformar; si no se aporta, se crea de 0 desde el csv.
         :type df: DataFrame
-        :param cols: Description
+        :param cols: Lista de columnas a transformar. Si no se aporta, serán las originales de df.
         :type cols: list
-        :param modo: Description
+        :param modo: Indica el modo de retorno de los datos: total incluye los datos nuevos y viejos, num incluye todas las columnas nuevas, y columna sólo incluye las columnas que se pasaron como argumento en cols.
         :type modo: str
-        :return: Description
+        :return: Un Dataframe que incluye los datos transformados.
         :rtype: DataFrame
         """
         import pandas as pd
@@ -169,20 +173,18 @@ class Analisis():
 
         return df_res
 
-                            
-                  
-    
-    def limpiar_errores(df: DataFrame = DataFrame(), cols: str = None, modo: str = 'total') -> DataFrame | tuple[DataFrame, tuple[int, int, int]]:
+    @staticmethod
+    def limpiar_errores(df: DataFrame = DataFrame(), cols: str = None, modo: str = 'total') -> DataFrame | tuple[Series, tuple[int, int, int]]:
         """
-        Docstring for limpiar_errores
+        Elimina los valores NaN, 0 y negativos de los datos.
         
-        :param df: Description
+        :param df: Dataframe a tratar.
         :type df: pd.DataFrame
-        :param cols: Description
+        :param cols: Columna a tratar, si se elige el modo columna.
         :type cols: str
-        :param modo: Description
+        :param modo: Dos modos: total devuelve el Dataframe completo sin errores, columna devuelve sólo una columna y la cantidad de errores de cada tipo que había.
         :type modo: str
-        :return: Description
+        :return: Dataframe o Series libre de errores.
         :rtype: DataFrame
         """
         import numpy as np
@@ -226,13 +228,14 @@ class Analisis():
 
         return df
     
+    @staticmethod
     def log_loss_modelo(modelo_dict: dict) -> list[float]:
         """
-        Docstring for log_loss_modelo
+        Calcula la pérdida logarítmica para un modelo de regresión logística.
         
-        :param modelo_dict: Description
+        :param modelo_dict: Diccionario que contiene como mínimo el modelo, X_test e y_test.
         :type modelo_dict: dict
-        :return: Description
+        :return: Lista con la pérdida logarítmica para cada clase de y.
         :rtype: list[float]
         """
         from sklearn.metrics import log_loss
@@ -256,13 +259,14 @@ class Analisis():
 
         return log_losses
     
+    @staticmethod
     def confusion_matrix_modelo(modelo_dict: dict) -> ndarray:
         """
-        Docstring for confusion_matrix_modelo
+        Crea la matriz de confusión para un modelo de clasificación.
         
-        :param modelo_dict: Description
+        :param modelo_dict: Diccionario que contiene como mínimo y_test e y_pred.
         :type modelo_dict: dict
-        :return: Description
+        :return: Array que contiene las cifras de verdaderos y falsos positivos y negativos.
         :rtype: ndarray
         """
         from sklearn.metrics import confusion_matrix
@@ -273,13 +277,14 @@ class Analisis():
 
         return cm
     
+    @staticmethod
     def roc_auc_modelo(modelo_dict: dict) -> list[ndarray, ndarray, float]:
         """
-        Docstring for roc_auc_modelo
+        Genera la cifra de AUC (área bajo la curva) para medir la robustez del modelo.
         
-        :param modelo_dict: Description
+        :param modelo_dict: Diccionario que contiene como mínimo el modelo, X_test e y_test.
         :type modelo_dict: dict
-        :return: Description
+        :return: Lista que contiene la ratio de falsos positivos, la ratio de verdaderos positivos, y el área bajo la curva.
         :rtype: list[ndarray]
         """
         from sklearn.metrics import roc_curve, auc
@@ -292,13 +297,14 @@ class Analisis():
 
         return [fpr, tpr, roc_auc_curva]
 
+    @staticmethod
     def importancia_caracteristicas_modelo(modelo_dict: dict) -> DataFrame:
         """
-        Docstring for importancia_caracteristicas_modelo
+        Genera un Dataframe que contiene la lista de características y su importancia en un modelo de clasificación.
         
-        :param modelo_dict: Description
+        :param modelo_dict: Diccionario que contiene como mínimo el modelo y X_test.
         :type modelo_dict: dict
-        :return: Description
+        :return: Dataframe con la importancia de características en orden ascendente.
         :rtype: DataFrame
         """
         import pandas as pd

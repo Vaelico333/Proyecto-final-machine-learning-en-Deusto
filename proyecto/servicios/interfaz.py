@@ -1135,8 +1135,7 @@ class InformeFinal(QWidget):
         mensaje = ''
         try:
             mensaje = Modelo.guardar_modelo(modelo=self.modelo['modelo'],
-                                kpis= self.modelo['kpis'],
-                                X=self.modelo['X_test'])
+                                kpis= self.modelo['kpis'])
             QMessageBox.information(self, 'Guardado del modelo', mensaje)
         except Exception as e:
             print('Error:', e)

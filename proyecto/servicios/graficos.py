@@ -2,13 +2,14 @@ from servicios.analisis import Analisis
 class Eda:
     from matplotlib.figure import Figure
     from matplotlib.axes import Axes
+    @staticmethod
     def col_hosp(figura: Figure) -> Axes:
         """
-        Docstring for col_hosp
+        Crea una gráfica de barras que muestra la distribución de las clases de la columna "hospitalizacion"
         
-        :param figura: Description
+        :param figura: Figura en la que se dibujará la gráfica.
         :type figura: Figure
-        :return: Description
+        :return: Objeto tipo Axes que contiene la gráfica.
         :rtype: Axes
         """
         col = 'hospitalizacion'
@@ -31,15 +32,16 @@ class Eda:
         ax.set_title('Distribución de los datos')
         return ax
     
+    @staticmethod
     def cols_num(figura: Figure, col: str) -> Axes:
         """
-        Docstring for cols_num
+        Crea una gráfica de línea que muestra la distribución de los datos de la columna a lo largo de sus entradas.
         
-        :param figura: Description
+        :param figura: Figura en la que se dibujará la gráfica.
         :type figura: Figure
-        :param col: Description
+        :param col: Columna a graficar.
         :type col: str
-        :return: Description
+        :return: Objeto tipo Axes que contiene la gráfica.
         :rtype: Axes
         """
         import pandas as pd
@@ -71,16 +73,19 @@ class GrafModelo:
     from matplotlib.axes import Axes
     from pandas import Series
     from numpy import ndarray
-    def graf_muestra(y_test: Series, y_pred: ndarray, ax: Axes):
+    @staticmethod
+    def graf_muestra(y_test: Series, y_pred: ndarray, ax: Axes) -> Axes:
         """
-        Docstring for graf_muestra
+        Crea una gráfica que muestra la exactitud del modelo.
         
-        :param y_test: Description
+        :param y_test: Variable objetivo de prueba.
         :type y_test: Series
-        :param y_pred: Description
+        :param y_pred: Variable objetivo predicha por el modelo.
         :type y_pred: ndarray
-        :param ax: Description
+        :param ax: Objeto tipo Axes que contendrá la gráfica.
         :type ax: Axes
+        :return: Objeto tipo Axes que contiene la gráfica.
+        :rtype: Axes
         """
         import seaborn as sns
         
@@ -96,15 +101,16 @@ class EvaluacionGraf:
     from pandas import DataFrame
     from numpy import ndarray
     from matplotlib.axes import Axes
+    @staticmethod
     def matriz_conf(cm: ndarray, ax: Axes) -> Axes:
         """
-        Docstring for matriz_conf
+        Crea un mapa de calor que muestra la matriz de confusión del modelo.
         
-        :param cm: Description
+        :param cm: Matriz de confusión del modelo.
         :type cm: ndarray
-        :param ax: Description
+        :param ax: Objeto tipo Axes que contendrá la gráfica.
         :type ax: Axes
-        :return: Description
+        :return: Objeto tipo Axes que contiene la gráfica.
         :rtype: Axes
         """
         import seaborn as sns
@@ -119,19 +125,20 @@ class EvaluacionGraf:
 
         return ax
     
+    @staticmethod
     def curva_roc(fpr: ndarray, tpr: ndarray, curva: float, ax: Axes) -> Axes:
         """
-        Docstring for curva_roc
+        Crea una gráfica de línea que muestra la curva ROC.
         
-        :param fpr: Description
+        :param fpr: Ratio de falsos positivos.
         :type fpr: ndarray
-        :param tpr: Description
+        :param tpr: Ratio de verdaderos positivos.
         :type tpr: ndarray
-        :param curva: Description
+        :param curva: Puntuación AUC-ROC.
         :type curva: float
-        :param ax: Description
+        :param ax: Objeto tipo Axes que contendrá la gráfica.
         :type ax: Axes
-        :return: Description
+        :return: Objeto tipo Axes que contiene la gráfica.
         :rtype: Axes
         """
         ax.plot(fpr, tpr, color='darkorange', lw=2, 
@@ -148,15 +155,16 @@ class EvaluacionGraf:
 
         return ax
 
+    @staticmethod
     def logloss_clase(log_losses: list[float], ax: Axes) -> Axes:
         """
-        Docstring for logloss_clase
+        Crea una gráfica de barras que muestra la pérdida logarítmica por clase.
         
-        :param log_losses: Description
+        :param log_losses: Lista de puntuaciones de pérdida por clase.
         :type log_losses: list[float]
-        :param ax: Description
+        :param ax: Objeto tipo Axes que contendrá la gráfica.
         :type ax: Axes
-        :return: Description
+        :return: Objeto tipo Axes que contiene la gráfica.
         :rtype: Axes
         """
         bars = ax.bar(['No', 'Sí'], log_losses, color='steelblue', alpha=0.7, 
@@ -176,15 +184,16 @@ class EvaluacionGraf:
 
         return ax
 
+    @staticmethod
     def importancia_carac(df: DataFrame, ax: Axes) -> Axes:
         """
-        Docstring for importancia_carac
+        Crea una gráfica de barras que muestra la importancia relativa de cada característica con que se entrenó el modelo.
         
-        :param df: Description
+        :param df: Dataframe que contiene la lista de características y su importancia.
         :type df: DataFrame
-        :param ax: Description
+        :param ax: Objeto tipo Axes que contendrá la gráfica.
         :type ax: Axes
-        :return: Description
+        :return: Objeto tipo Axes que contiene la gráfica.
         :rtype: Axes
         """
         ax.bar(df['características'], 
@@ -201,9 +210,20 @@ class EvaluacionGraf:
     
 class Informes:
     from matplotlib.axes import Axes
-    
-    def grafico_final(modelo_dict: dict, ax: Axes, nom: str):
-
+    @staticmethod
+    def grafico_final(modelo_dict: dict, ax: Axes, nom: str) -> Axes:
+        """
+        Crea una gráfica acorde al modelo actual: impacto de características en LogReg, y uno de los árboles en el resto.
+        
+        :param modelo_dict: Diccionario que contiene el modelo y X_test, como mínimo.
+        :type modelo_dict: dict
+        :param ax: Objeto tipo Axes que contendrá la gráfica.
+        :type ax: Axes
+        :param nom: Nombre del tipo de modelo.
+        :type nom: str
+        :return: Objeto tipo Axes que contiene la gráfica.
+        :rtype: Axes
+        """
         import matplotlib.pyplot as plt
         modelo = modelo_dict['modelo']
         X = modelo_dict['X_test']

@@ -1,66 +1,72 @@
 from servicios.analisis import Leer_Datos, Analisis
 
 class Textos:
+    @staticmethod
     def bienvenida() -> str:
         """Devuelve el texto de la página de bienvenida de la aplicación."""
-        texto = u'''Bienvenido a este ejercicio de final de curso de Machine Learning con Deusto, realizado por Darío Zoreda.
-El objetivo es crear y analizar un conjunto de datos ficticios relativos a la salud de un número de personas. 
+        texto = u'''<h3>Bienvenido a este ejercicio de final de curso de Machine Learning con Deusto, realizado por Darío Zoreda.</h3>
+<p>El objetivo es crear y analizar un conjunto de <u>datos ficticios</u> relativos a la salud de un número de personas.</p>
 
-De manera aleatoria, crearemos un número n de pacientes ficticios, con un ID, y datos de edad, peso, altura, presión arterial y glucosa.
+<p>De manera aleatoria, crearemos un número n de pacientes ficticios, con un <u>ID</u>, y datos de <u>edad, peso, altura, presión arterial y glucosa</u>.
 Dado que la intención del ejercicio es ponernos las cosas un poquito complicadas, crearé esos datos como cadenas de caracteres, con el número y su unidad, y en distintas unidades de medida, cuando sea posible.
-Una vez creados estos datos, crearé la columna "hospitalización", que será la columna objetivo a predecir por el modelo.
-Finalmente, introduciré errores en la base de datos: números negativos, 0 y NaN.
+Una vez creados estos datos, crearé la columna <i>hospitalización</i>, que será la columna objetivo a predecir por el modelo.
+Finalmente, introduciré errores en la base de datos: <b>números negativos, 0 y NaN</b>.</p>
 
-Habiendo ya creado los datos, pasaremos al análisis: primero, un EDA básico.
+<p>Habiendo ya creado los datos, pasaremos al análisis: primero, un <b>EDA</b> básico.
 Veremos cómo transformo las columnas de cadenas de caracteres a números, y cómo homogeneizo las unidades.
-Entonces, pasaremos a ver las características de los datos, los errores y cómo los corregiré.
+Entonces, pasaremos a ver las características de los datos, los errores y cómo los corregiré.</p>
 
-Ya tendremos los datos listos para entrenar un modelo.
-Se ofrecen tres opciones a probar: árbol de decisión, bosque aleatorio y potenciación extrema del gradiente. Asimismo, se ofrece la posibilidad de optimizarlos mediante GridSearchCV (validación cruzada en cuadrícula).
-Según el modelo elegido, se mostrará una gráfica que represente su capacidad predictiva.
-Ahora vamos a evaluar el rendimiento del modelo, con una matriz de confusión, la curva ROC-AUC y las puntuaciones de precisión y recuperación.
+<p>Ya tendremos los datos listos para entrenar un <b>modelo</b>.
+Se ofrecen tres opciones a probar: <u>árbol de decisión, bosque aleatorio y potenciación extrema del gradiente</u>. Asimismo, se ofrece la posibilidad de optimizarlos mediante <b>GridSearchCV</b> (validación cruzada en cuadrícula).
+Según el modelo elegido, se mostrará una gráfica que represente su capacidad predictiva.</p>
 
-Finalmente, veremos una gráfica representativa del modelo, y un informe basado en sus métricas.'''
+<p>Entonces pasaremos a <b>evaluar</b> el rendimiento del modelo, con una matriz de confusión, la curva ROC-AUC y las puntuaciones de precisión y sensibilidad.</p>
+
+<p>Finalmente, veremos una gráfica representativa del modelo, y un informe basado en sus métricas.</p>'''
         return texto
     
+    @staticmethod
     def creacion() -> str:
         """Devuelve el texto de explicación de la creación de los datos."""
-        texto = u'''En este paso, crearemos la base de datos.
-Primero, estableceré unos rangos de peligro basados en lo que la ciencia médica dice, para el IMC, la presión arterial y la glucosa, y todo ello relacionado con unos rangos de edad.
-Para agregar complejidad a los datos, creé las columnas de altura, peso y glucosa con dos tipos de unidad de medida cada una, distribuida de manera aleatoria.
-Para asegurar una distribución realista, utilizaré una distribución normal o de campana de Gauss, estableciendo una desviación estándar tal que produzca datos extremos más o menos realistas, que nos permitan crear esos datapoints en los que el paciente debe ser hospitalizado.
-El siguiente paso es revisar si se cumple alguna condición para la hospitalización (con una basta), y agregar la columna correspondiente.
-Una vez los datos están completos y coherentes, agregamos errores: de manera aleatoria, se cambian datos por 0, NaN o se cambian de signo a negativo.
-Finalmente, guardamos los datos en un archivo de formato csv: datos_forjados.csv
-P.D.: invito a quien lo use a jugar con la proporción de pacientes hospitalizados o no, ya que produce efectos interesantes en el desempeño de los modelos.'''
+        texto = u'''<p>En este paso, crearemos la base de datos.</p><br>
+<p>Primero, estableceré unos <u>rangos de peligro</u> basados en lo que la ciencia médica dice, para el IMC, la presión arterial y la glucosa, y todo ello relacionado con unos rangos de edad.</p>
+<p>Para agregar complejidad a los datos, creé las columnas de altura, peso y glucosa con <b>dos tipos de unidad</b> de medida cada una, distribuida de manera aleatoria.
+Para asegurar una distribución realista, utilizaré una <b>distribución normal</b> o de campana de Gauss, estableciendo una desviación estándar tal que produzca datos extremos más o menos realistas, que nos permitan crear esos datapoints en los que el paciente debe ser hospitalizado.</p>
+<p>El siguiente paso es revisar si se cumple alguna condición para la hospitalización (con una basta), y agregar la columna correspondiente.</p>
+<p>Una vez los datos están completos y coherentes, agregamos errores: de manera aleatoria, se cambian datos por 0, NaN o se cambian de signo a negativo.</p>
+<p>Finalmente, guardamos los datos en un archivo de formato csv: datos_forjados.csv</p>
+<br><p>P.D.: invito a quien lo use a jugar con la proporción de pacientes hospitalizados o no, ya que produce efectos interesantes en el desempeño de los modelos.</p>'''
         return texto
     
+    @staticmethod
     def transf_num() -> str:
         """Devuelve el texto de explicación de la transformación a numérico de los datos."""
-        texto = u'''Debido al formato en que hemos recibido los datos, hay varias columnas que son de tipo "string", y por tanto, incompatibles con un modelo de clasificación o regresión.
-Además, hay columnas con más de un tipo de unidad, lo cual es un gran problema, ya que al tener diferentes escalas, desvirtuarían mucho la capacidad predictiva del modelo.
-Por tanto, en el backend realizaremos dos operaciones fundamentales:
-- Quitar el nombre de la unidad, dejando sólo el número.
-- Convertir el número a una unidad estándar, y cambiar su tipo a float.
+        texto = u'''<p>Debido al formato en que hemos recibido los datos, hay varias columnas que son de tipo <i>string</i>, y por tanto, incompatibles con un modelo de clasificación o regresión.</p>
+<p>Además, hay columnas con más de un tipo de unidad, lo cual es un gran problema, ya que al tener diferentes escalas, desvirtuarían mucho la capacidad predictiva del modelo.</p>
+<p>Por tanto, en el backend realizaremos dos operaciones fundamentales:
+<ul><li>Quitar el nombre de la unidad, dejando sólo el número.</li>
+<li>Convertir el número a una unidad estándar, y cambiar su tipo a float.</li></p>
 
 Con esto, tendremos un DataFrame compuesto de 7 características, 6 de ellas numéricas y una categórica (hospitalización)'''
         return texto
     
+    @staticmethod
     def trat_err() -> str:
         """Devuelve el texto de explicación del tratamiento de errores de los datos."""
-        texto = '''Ahora pasamos a eliminar los errores que introdujimos en los datos previamente.
-Como no sabemos cuál era el dato original, he decidido que los ceros y NaN serán sustituidos por la media aritmética, y todos los datos que estén en signo negativo serán convertidos en valor absoluto usando la función abs().
+        texto = '''<p>Ahora pasamos a eliminar los errores que introdujimos en los datos previamente.</p>
+<p>Como no sabemos cuál era el dato original, he decidido que los <u>ceros</u> y <u>NaN</u> serán sustituidos por la <b>media aritmética</b>, y todos los datos que estén en <u>signo negativo</u> serán convertidos en valor absoluto usando la función <b>abs()</b>.</p>
 
-Además, durante la creación de datos introdujimos como condición de hospitalización el IMC, pero es un dato que no existe en nuestra base de datos de manera explícita.
+<p>Además, durante la creación de datos introdujimos como condición de hospitalización el IMC, pero es un dato que no existe en nuestra base de datos de manera explícita.
 Durante la creación de este programa, probé a crear los modelos con los datos tal cual están, y su sensibilidad se veía muy reducida, cosa que es crítica para un problema como este, ya que dejaría a muchas personas necesitadas sin hospitalización.
-Pero al crear e introducir la columna IMC, todas las métricas de los modelos subieron mucho, hasta una nota sobresaliente. Por ello, decidí introducirla en este paso. 
-También eliminaremos la columna "id" para evitar confundir al modelo.
+Pero al crear e introducir la columna IMC, todas las métricas de los modelos subieron mucho, hasta una nota sobresaliente. Por ello, decidí introducirla en este paso. </p>
+<p>También eliminaremos la columna <i>id</i> para evitar confundir al modelo.</p>
 
-Con estas operaciones, los datos ya están listos para ser utilizados en el entrenamiento de nuestro modelo.
+<p>Con estas operaciones, los datos ya están listos para ser utilizados en el entrenamiento de nuestro modelo.</p>
 
-A continuación, se muestra un recuento de los errores en la columna seleccionada, y el DataFrame resultado de la limpieza:'''
+<p>A continuación, se muestra un recuento de los errores en la columna seleccionada, y el DataFrame resultado de la limpieza:</p>'''
         return texto
     
+    @staticmethod
     def modelo_reglog() -> str:
         """Devuelve el texto explicativo del modelo de regresión logística."""
         ecuacion_logit = u"ln(P / (1 - P)) = β₀ + β₁X₁ + ... + βₙXₙ" 
@@ -103,6 +109,7 @@ Parámetros:
 </ul>'''
         return texto
 
+    @staticmethod
     def modelo_bosque() -> str:
         """Devuelve el texto explicativo del modelo de bosque aleatorio."""
         texto = '''<h2>Modelo de Bosque Aleatorio</h2>
@@ -124,6 +131,7 @@ Parámetros:
 </ul>'''
         return texto
 
+    @staticmethod
     def modelo_xgb() -> str:
         """Devuelve el texto explicativo del modelo de potenciación extrema del gradiente."""
         texto = '''<h2>Modelo Potenciación Extrema del Gradiente</h2>
@@ -145,6 +153,7 @@ Parámetros:
     
 class Info:
     from pandas import DataFrame
+    @staticmethod
     def extraer_info(info: list) -> tuple[list]:
         """
         Devuelve el nombre de la columna, los valores no nulos y el tipo de datos de una llamada a Dataframe.info() en forma de tres listas.
@@ -174,6 +183,7 @@ class Info:
                 continue
         return col_nom, non_null, dtype
     
+    @staticmethod
     def crear_info(df: DataFrame) -> list[str]:
         """
         Recoge el texto de una llamada a Dataframe.info() y lo devuelve.
@@ -191,6 +201,7 @@ class Info:
         lista_texto = buffer.getvalue().split('\n')
         return lista_texto
 
+    @staticmethod
     def extraer_descripcion_columna(df: DataFrame) -> list:
         """Devuelve los contenidos de Dataframe.describe() como una lista de cadenas de texto."""
         info = df.describe()
@@ -204,6 +215,7 @@ class Info:
                 descripcion.append(linea)
         return descripcion
 
+    @staticmethod
     def info_datos_originales(url: str = 'datos_forjados.csv') -> str:
         """
         Abre los datos originales y 
@@ -216,18 +228,20 @@ class Info:
 
         # Extraemos las listas de datos que necesitamos y se los aplicamos a un texto
         col_nom, non_null, dtype = Info.extraer_info(lista_texto)
-        texto = '''\nCantidad de datos no nulos y tipo de dato por columna:\n'''
+        texto = '''<p>Cantidad de datos no nulos y tipo de dato por columna:</p><ol>'''
         for n, col in enumerate(col_nom):
-            texto_col = f'''Columna "{col}":
-    - Datos no nulos: {non_null[n]}
-    - Datos nulos: {len(df) - int(non_null[n])}
-    - Tipo de dato: {dtype[n]}
-********************************
+            texto_col = f'''<li>Columna <i>{col}</i>:
+<ul><li>Datos no nulos: <b>{non_null[n]}</b></li>
+<li>Datos nulos: <b>{len(df) - int(non_null[n])}</b></li>
+<li>Tipo de dato: <b>{dtype[n]}</b></li></ul>
+********************************</li>
 '''
         # Unimos los textos y los devolvemos 
             texto += texto_col
+        texto += '</ol>'
         return texto
     
+    @staticmethod
     def info_datos_num(col: str, url: str = 'datos_forjados.csv') -> str:
         """
         Abre los datos, los convierte a numérico y extrae la información de ellos.
@@ -250,25 +264,25 @@ class Info:
         col_nom, non_null, dtype = Info.extraer_info(lista_texto)
         descripcion = Info.extraer_descripcion_columna(df_num)
         # Se lo aplicamos al texto
-        texto = f'''
-Al realizar el tratamiento de los datos, vamos viendo el progreso en la coherencia de estos:
+        texto = f'''<p>Al realizar el tratamiento de los datos, vamos viendo el progreso en la coherencia de estos:</p>
 
-Cantidad de datos y tipo de dato en {col_nom[0]}:
-    - Datos no nulos: {non_null[0]}
-    - Datos nulos: {len(df) - int(non_null[0])}
-    - Tipo de dato: {dtype[0]}
+<ol><li>Cantidad de datos y tipo de dato en <i>{col_nom[0]}</i>:
+<ul><li>Datos no nulos: {non_null[0]}</li>
+<li>Datos nulos: {len(df) - int(non_null[0])}</li>
+<li>Tipo de dato: {dtype[0]}</li></ul>
 
-Características de la columna:
-    - Media aritmética: {descripcion[1]:.2f}
-    - Desviación estándar: {descripcion[2]:.2f}
-    - Valor mínimo: {descripcion[3]}
-    - Mediana: {descripcion[5]}
-    - Valor máximo: {descripcion[7]}
-
+<li>Características de la columna:
+<ul><li>Media aritmética: {descripcion[1]:.2f}</li>
+<li>Desviación estándar: {descripcion[2]:.2f}</li>
+<li>Valor mínimo: {descripcion[3]}</li>
+<li>Mediana: {descripcion[5]}</li>
+<li>Valor máximo: {descripcion[7]}</li></ul>
+</li></ol>
 '''
 
         return texto
     
+    @staticmethod
     def info_datos_noerr(col: str, url: str = 'datos_forjados.csv') -> str:
         """
         Analiza la columna seleccionada para buscar errores y crea un texto formateado con el resultado.
@@ -294,13 +308,14 @@ Características de la columna:
             df_noerr = Analisis.limpiar_errores(df=df_num, cols=col, modo='columna')
         
         texto = f'''
-Recuento de errores en la columna {col}:
-    - NaN: {df_noerr[1][0]}
-    - 0: {df_noerr[1][1]}
-    - Negativos: {df_noerr[1][2]}'''
+Recuento de errores en la columna <i>{col}</i>:
+<ul><li>NaN: {df_noerr[1][0]}</li>
+<li>0: {df_noerr[1][1]}</li>
+<li>Negativos: {df_noerr[1][2]}</li></ul>'''
         return texto
 
 class Informe:
+    @staticmethod
     def eval_kpis(kpis: dict[str, float]) -> str:
         """
         Crea y devuelve un texto en función del desempaño del modelo en base a cuatro métricas: exactitud, precisión, sensibilidad y F1.
@@ -366,12 +381,15 @@ class Informe:
 
         return texto
 
+    @staticmethod
     def eval_metricas(metricas: dict) -> str:
-        """Evalúa las métricas y devuelve un texto acorde."""
+        """Evalúa las métricas y devuelve un texto acorde a los resultados."""
         import math
         from pandas import DataFrame
         import re
 
+        texto = ''
+        # Log loss sólo se evalúa en regresión logística
         if 'log_losses' in metricas:
             log_loss = metricas['log_losses'][0]
             texto = f"""<li><p>La pérdida logarítmica o entropía cruzada binaria es la métrica principal para evaluar la capacidad de predecir probabilidades de un modelo de regresión logística.
@@ -388,23 +406,26 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
                       ambiguo, ambiguo, 
                       incorrecto, incorrecto]
             try:
-                texto += rangos[int(math.floor(log_loss*10))]
+                texto += rangos[int(math.floor(log_loss*10))] # Se me ocurrió un método para usar la puntuación como índice de una lista
             except IndexError:
                 texto += rangos[10]
             texto += '</li>'
 
+        # Importancia de características se evalúa en bosque aleatorio y xgboost
         elif 'importancia_carac' in metricas:
             texto = f"""<li><p>La importancia de características nos informa del peso de cada característica en el modelo a la hora de tomar decisiones y hacer predicciones.</p>
 <p>El orden de importancia en este modelo es:</p><ol>"""
+            # Ordenamos el DataFrame por importancia en orden descendente
             importancia: DataFrame = metricas['importancia_carac'].sort_values(by='importancia', ascending=False).reset_index(drop=True)
             for dato in importancia.index:
                 for n, i in enumerate(importancia.iloc[dato]):
-                    if n % 2 == 0:
-                        texto += f"<li>{i}: "
+                    if n == 0:
+                        texto += f"<li>{i}: " # Si es 0, es el nombre de la característica
                     else:
-                        texto += f"{i:.2%}</li>"
+                        texto += f"{i:.2%}</li>" # Si es 1, es la cifra de su importancia
             texto += '</ol>'
 
+            # Agregamos una nota si la importancia del IMC es muy alta
             patron = r'IMC:\s(\d+\.\d+)'
             imc_patron = re.search(patron, texto)
             imc_cifra = float(imc_patron.group(1))
@@ -412,6 +433,7 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
                 texto += """<p><i>NOTA</i>: el IMC recibe una sobrerrepresentación en la importancia debido a cómo han sido fabricados los datos: al provenir de dos características aleatorias con distribución normal igual que el resto, se producen combinaciones extremas en ocasiones, lo que lleva a hospitalizaciones. Jugando con los rangos de generación de los datos, quizá se pueda mitigar o arreglar.</p>"""
             texto += '</li>'
 
+        # La métrica ROC-AUC es común a todos
         roc_auc = metricas['auc']
         texto_auc = f'''<li><p>La métrica <b>ROC-AUC</b> (<i>Receiver Operating Characteristic - Area Under the Curve</i>) se utiliza para comparar la tasa de falsos positivos con la de verdaderos positivos a lo largo de diferentes umbrales de clasificación, y así extraer la capacidad de diferenciación de clases del modelo, y por tanto, su capacidad predictiva.</p>
 <p>La curva ideal estaría lo más alejada posible de la diagonal, formando un ángulo recto. La diagonal representa una incertidumbre total: las probabilidades de elegir una u otra clase son las mismas, el 50%.</p>
@@ -429,17 +451,18 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
         
         return texto
     
+    @staticmethod
     def informe_eval(nom: str, metricas: dict, kpis: dict) -> str:
         """
-        Muestra una explicación de a qué corresponden los rangos observados en los KPIs.
+        Muestra una explicación de a qué corresponden los rangos observados en las métricas evaluadas.
         
         :param nom: Nombre del tipo de modelo a evaluar.
         :type nom: str
-        :param metricas: Description
+        :param metricas: Diccionario que contiene las siguientes métricas del modelo: matriz de confusión, log loss/importancia de características y AUC. 
         :type metricas: dict
-        :param kpis: Description
+        :param kpis: Diccionario que contiene las siguientes métricas del modelo: exactitud, precisión, sensibilidad y F1.
         :type kpis: dict
-        :return: Description
+        :return: Texto compuesto por en análisis de las métricas.
         :rtype: str
         """
         texto = f'''<h2>Informe de evaluación de {nom}</h2>
@@ -447,17 +470,19 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
 <p><h3>Indicadores clave:</h3></p> {Informe.eval_kpis(kpis)}'''
         return texto
 
+    @staticmethod
     def final(kpis: dict[str, float], metricas: dict) -> str:
         """
-        Docstring for final
+        Evalúa y muestra la calidad general del modelo, y devuelve un texto de cierre.
         
-        :param kpis: Description
+        :param kpis: Diccionario que contiene las siguientes métricas del modelo: exactitud, precisión, sensibilidad y F1.
         :type kpis: dict[str, float]
-        :param metricas: Description
+        :param metricas: Diccionario que contiene las siguientes métricas del modelo: matriz de confusión, log loss/importancia de características y AUC. 
         :type metricas: dict
-        :return: Description
+        :return: Texto del informe final y cierre del proyecto.
         :rtype: str
         """
+        # Definimos las variables
         texto = ''
         exactitud = kpis['Exactitud']
         precision = kpis['Precisión']
@@ -465,11 +490,13 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
         f1 = kpis['F1']
         auc = metricas['auc']
 
+        # Si la sensibilidad es baja
         estrategia_sensibilidad = f'''<p>En problemas de clasificación como este, donde un falso negativo es muy peligroso, conviene maximizar la sensibilidad, que en este caso es del {sensibilidad:.2%}, mostrando un desbalance con la precisión, del {precision:.2%}. Algunas estrategias útiles son:
 <ul><li>Ajuste del umbral de clasificación mediante hiperparámetros: bajarlo implica menos falsos negativos.</li>
 <li>Balanceo de clases: si hay pocos casos de hospitalización, es posible que el modelo los ignore. En este programa, se pueden crear datos sintéticos con cualquier proporción entre las dos clases, pero si no fuera así, se podría asignar pesos a las clases o usar técnicas de remuestreo para añadir datos y rebalancear las clases.</li>
 <li>Selección de algoritmo: XGBoost es el mejor, ya que podríamos definir funciones de pérdida que castiguen más los falsos negativos que los falsos positivos.</li></ul></p>'''
         
+        # Si la precisión es baja
         estrategia_precision = f'''<p>La precisión es importante, ya que si es muy baja podría colapsar nuestro hospital con pacientes sanos, pero es menos crucial que la sensibilidad. En nuestro caso, con una precisión del {precision:.2%}, y una sensibilidad del {sensibilidad:.2%}, vemos un desequilibrio en favor de la sensibilidad. No es un gran problema, pero si queremos solucionarlo, hay varias estrategias:
 <ul><li>Ajuste del umbral de clasificación mediante hiperparámetros: subirlo implica menos falsos positivos.</li>
 <li>Regularización del modelo: utilizando regularización Ridge.</li>
@@ -477,6 +504,7 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
 <li>Selección de algoritmo: XGBoost o Random Forest son los mejores modelos para evitar una precisión baja, ya que los datos atípicos no les afectan tanto.</li></ul></p>
 '''
         def estrategia(texto, sensibilidad, precision):
+            """Evalúa si hay una diferencia sustancial entre sensibilidad y precisión, y si la hay, añade un texto de recomendación."""
             if sensibilidad * 1.2 < precision:
                 texto += estrategia_sensibilidad
             elif sensibilidad > precision * 1.2:
@@ -486,6 +514,11 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
         sum_metricas = exactitud + precision + sensibilidad + f1 + auc
         if sum_metricas == 5.0:
             texto += '<p>El modelo es <b><u>perfecto</b></u>. Todas las métricas están al 100%, lo cual indica un desempeño impecable, pero cuidado con la posibilidad de esté sobreajustado. Recomiendo guardarlo para su posterior uso.</p>'
+        elif exactitud >= 0.95 and f1 >= 0.95:
+            texto += '<p>El modelo es de <b><u>altísima calidad</b></u>, mostrando escasos errores en la predicción.</p>'
+            texto = estrategia(texto, sensibilidad, precision)
+            if sensibilidad >= 0.9 and precision >= 0.9:
+                texto += '<p><b>Recomiendo guardarlo para su posterior uso.</b></p>'
         elif exactitud >= 0.9 and f1 >= 0.9:
             texto += '<p>El modelo es de <b><u>alta calidad</b></u>, mostrando escasos errores en la predicción. Su margen de mejora será, en el mejor de los casos, marginal.</p>'
             texto = estrategia(texto, sensibilidad, precision)
@@ -503,22 +536,25 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
         elif exactitud < 0.5 or f1 < 0.5:
             texto += '<p>El modelo es de <b><u>calidad nula</b></u>, mostrando más errores que aciertos en la predicción. Es imperativo revisar los datos y reentrenar el modelo: conviene examinar los hiperparámetros, aumentar la cantidad de datos de entrenamiento o buscar una distribución de clases objetivo más uniforme.</p>'
         
-        
         return texto
     
-    def informe_final(nom, metricas, kpis) -> str:
+    @staticmethod
+    def informe_final(nom: str, metricas: dict, kpis: dict) -> str:
         """
-        Da una explicación final del modelo, sus características y su utilidad en el contexto de un triaje médico.
+        Da una explicación final del modelo, sus características y su calidad.
         
-        :param nom: Description
-        :param metricas: Description
-        :param kpis: Description
-        :return: Description
+        :param nom: Nombre del tipo de modelo
+        :type nom: str
+        :param metricas: Diccionario que contiene las siguientes métricas del modelo: matriz de confusión, log loss/importancia de características y AUC. 
+        :type metricas: dict
+        :param kpis: Diccionario que contiene las siguientes métricas del modelo: exactitud, precisión, sensibilidad y F1.
+        :type kpis: dict
+        :return: Texto con el análisis final del modelo y el cierre.
         :rtype: str
         """
-        texto_final = '''<br><p>Y con este informe sobre la viabilidad del modelo, llegamos al final del proyecto. Debajo de este recuadro hay 3 botones, que permiten guardar el modelo, volver a creación del modelo para probar otras opciones, o volver a la página de bienvenida, por si fuera necesario crear los datos de 0.</p>
+        texto_final = '''<p>Y con este informe sobre la viabilidad del modelo, llegamos al final del proyecto. Debajo de este recuadro hay 3 botones, que permiten guardar el modelo, volver a creación del modelo para probar otras opciones, o volver a la página de bienvenida, por si fuera necesario crear los datos de 0.</p>
 <p>Si decido expandir la funcionalidad de esta aplicación como proyecto personal, añadiré la posibilidad de cargar un modelo guardado y más gráficas de diagnóstico, quizá incluso más opciones de modelos a crear. De momento, para este trabajo me pareció suficiente.</p>
-<p>Tardé 53 días en crear este programa, incluidas casi dos semanas en las que no pude hacer gran cosa por causas personales.</p>
+<p>Tardé 55 días en crear este programa, incluidas casi dos semanas en las que no pude hacer gran cosa por causas personales.</p>
 <br>Fdo.:<br><h3>Darío Zoreda Gallego</h3>'''
 
         texto = f'''<h2>Informe final de {nom}</h2>
@@ -527,17 +563,18 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
         texto += texto_final
         return texto
     
+    @staticmethod
     def pie_final(nom: str, metricas: dict, kpis: dict[str, float]) -> str:
         """
-        Docstring for pie_final
+        Resume las características más representativas del modelo y agrégalas en un texto.
         
-        :param nom: Description
+        :param nom: Nombre del tipo de modelo.
         :type nom: str
-        :param metricas: Description
+        :param metricas: Diccionario que contiene varias métricas del modelo: para LogisticRegression, pérdida logarítmica y AUC; para el resto, importancia de características y AUC.
         :type metricas: dict
-        :param kpis: Description
+        :param kpis: Diccionario que contiene la exactitud, precisión, sensibilidad y F1 del modelo.
         :type kpis: dict[str, float]
-        :return: Description
+        :return: Texto con formato.
         :rtype: str
         """
         str_kpis = ''

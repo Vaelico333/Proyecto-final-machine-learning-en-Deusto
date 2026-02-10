@@ -3,8 +3,16 @@ from servicios.trabajador import Decorador
 class Modelo():
     from pandas import DataFrame
     from numpy import ndarray
+    @staticmethod
     def params(modelo: str) -> dict:
-
+        """
+        Contén y devuelve los hiperparámetros posibles para el entrenamiento de cada modelo.
+        
+        :param modelo: Nombre abreviado del modelo a entrenar.
+        :type modelo: str
+        :return: Diccionario con todos los hiperparámetros posibles del modelo solicitado.
+        :rtype: dict
+        """
         import numpy as np
         parametros_reglog = {'l1_ratio':['1.0','0.5','0'],
                              'C':['0.01', '0.1', '1.0', '10'],
@@ -33,9 +41,16 @@ class Modelo():
         
         return eval(switch[modelo])
     
+    
     @Decorador.progreso
+    @staticmethod
     def reglog(*args, **kwargs):
-
+        """
+        Entrena un modelo de regresión logística usando los hiperparámetros aportados en args y devuelve un diccionario que contiene el modelo, X_test e y_test.
+        
+        :param args: Hiperparámetros para entrenar el modelo.
+        :param kwargs: Otros parámetros relativos a Trabajador.
+        """
         from sklearn.preprocessing import StandardScaler
         from sklearn.model_selection import train_test_split
         from sklearn.linear_model import LogisticRegression
@@ -68,8 +83,14 @@ class Modelo():
             return modelo_dicc
 
     @Decorador.progreso
+    @staticmethod
     def bosque(*args, **kwargs):
-
+        """
+        Entrena un modelo de bosque aleatorio usando los hiperparámetros aportados en args y devuelve un diccionario que contiene el modelo, X_test e y_test.
+        
+        :param args: Hiperparámetros para entrenar el modelo.
+        :param kwargs: Otros parámetros relativos a Trabajador.
+        """
         from sklearn.model_selection import train_test_split
         from sklearn.ensemble import RandomForestClassifier
 
@@ -97,7 +118,7 @@ class Modelo():
         lista_params.append(bool(args[-1]))
         modelo =  RandomForestClassifier(n_estimators=1, max_depth=lista_params[1], min_samples_split=lista_params[2],
                                     min_samples_leaf=lista_params[3], max_features=lista_params[4], bootstrap=lista_params[5], 
-                                    random_state=17, warm_start=True)
+                                    random_state=17, warm_start=True, n_jobs=1)
         for n in range(1, control.total_pasos+1):
             modelo.n_estimators = n
             modelo.fit(X_train, y_train)
@@ -107,8 +128,14 @@ class Modelo():
         return modelo_dicc
 
     @Decorador.progreso
+    @staticmethod
     def xgb(*args, **kwargs):
-
+        """
+        Entrena un modelo de potenciación extrema del gradiente usando los hiperparámetros aportados en args y devuelve un diccionario que contiene el modelo, X_test e y_test.
+        
+        :param args: Hiperparámetros para entrenar el modelo.
+        :param kwargs: Otros parámetros relativos a Trabajador.
+        """
         from sklearn.model_selection import train_test_split
         import xgboost
         from xgboost import XGBClassifier
@@ -148,8 +175,15 @@ class Modelo():
         modelo_dicc['modelo'] = modelo
         return modelo_dicc
     
+    @staticmethod
     def gs_cv(nom: str, **kwargs):
-
+        """
+        Entrena el modelo solicitado mediante HalvingGridSearchCV usando los hiperparámetros contenidos en Modelo.params() y devuelve un diccionario que contiene el modelo, X_test e y_test.
+        
+        :param nom: Nombre abreviado del tipo de modelo a entrenar.
+        :type nom: str
+        :param kwargs: Otros parámetros relativos a Trabajador.
+        """
         from sklearn.experimental import enable_halving_search_cv
         from sklearn.model_selection import HalvingGridSearchCV
         from sklearn.linear_model import LogisticRegression
@@ -239,9 +273,18 @@ class Modelo():
         modelo_dicc['modelo'] = modelo_final
         return modelo_dicc
 
-
-    def guardar_modelo(modelo: object, kpis: dict, X: DataFrame | ndarray) -> str:
-
+    @staticmethod
+    def guardar_modelo(modelo: object, kpis: dict) -> str:
+        """
+        Guarda el modelo actual en formato .ubj si es XGBoost, o .pkl en los otros casos.
+        
+        :param modelo: Modelo a guardar.
+        :type modelo: object
+        :param kpis: Diccionario que contiene la exactitud, precisión, sensibilidad y F1 del modelo.
+        :type kpis: dict
+        :return: Mensaje de éxito o fallo en el guardado.
+        :rtype: str
+        """
         import datetime
         import os
         import joblib
@@ -308,15 +351,16 @@ class Evaluacion:
     from numpy import ndarray
     from pandas import Series
     from matplotlib.axes import Axes
+    @staticmethod
     def kpis(y_test: Series, y_pred: ndarray) -> dict:
         """
-        Docstring for kpis
+        Evalúa el modelo en exactitud, precisión, sensibilidad y F1 y devuélvelos en forma de diccionario.
         
-        :param y_test: Description
+        :param y_test: Variable objetivo de prueba.
         :type y_test: Series
-        :param y_pred: Description
+        :param y_pred: Variable objetivo predicha por el modelo.
         :type y_pred: ndarray
-        :return: Description
+        :return: Diccionario que contiene la exactitud, precisión, sensibilidad y F1 del modelo.
         :rtype: dict
         """
         from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
@@ -334,17 +378,18 @@ class Evaluacion:
 
         return kpis
     
-    def eval_modelo(modelo_dict: dict, axes: list[Axes], nom: str) -> tuple [tuple[Axes], dict]:
+    @staticmethod
+    def eval_modelo(modelo_dict: dict, axes: list[Axes], nom: str) -> tuple [tuple[Axes], dict[str, float]]:
         """
-        Docstring for eval_modelo
+        Evalúa el modelo y extrae la matriz de confusión, puntuación AUC y si el modelo es LogReg, evalúa la pérdida logarítmica, y en el resto de casos, la importancia de características.
         
-        :param modelo_dict: Description
+        :param modelo_dict: Diccionario que contiene el modelo, X_test, y_test e y_pred.
         :type modelo_dict: dict
-        :param axes: Description
+        :param axes: Lista de objetos tipo Ax donde dibujaremos las gráficas.
         :type axes: list[Axes]
-        :param nom: Description
+        :param nom: Nombre del tipo de modelo.
         :type nom: str
-        :return: Description
+        :return: Tupla que contiene los Axes dibujados y las métricas del modelo.
         :rtype: tuple [tuple [Axes], dict]
         """
         from servicios.graficos import EvaluacionGraf as eg

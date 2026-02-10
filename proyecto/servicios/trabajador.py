@@ -112,7 +112,7 @@ class Trabajador(QRunnable):
                 self.señales.error.emit(str(e))
 
 class Decorador():
-
+    @staticmethod
     def progreso(func):
         import functools
         @functools.wraps(func)

@@ -1,5 +1,16 @@
 class Generador_Datos():
+    @staticmethod
     def guardar_generador_datos(datos: list[dict], url: str = 'datos_forjados.csv') -> bool:
+        """
+        Guarda los datos generados en forma de archivo CSV en la misma carpeta que el archivo actual.
+        
+        :param datos: Lista de diccionarios, cada uno de los cuales es una fila.
+        :type datos: list[dict]
+        :param url: Nombre del archivo a crear.
+        :type url: str
+        :return: Confirmación de guardado.
+        :rtype: bool
+        """
         import os
         import csv
         url = os.path.join(os.path.dirname(__file__), url)
@@ -14,7 +25,22 @@ class Generador_Datos():
         except FileNotFoundError:
             return False
     
+    @staticmethod
     def condicion_hosp(paciente: dict, imc_rango: list[float], gluc_rango: list[float], ten_sis: int) -> int:
+        """
+        Evalúa si los datos caen dentro o fuera del rango de salud, y devuelve un número que indica la gravedad del paciente.
+        
+        :param paciente: Diccionario que contiene los datos del paciente.
+        :type paciente: dict
+        :param imc_rango: Rango de salud del IMC.
+        :type imc_rango: list[float]
+        :param gluc_rango: Rango de salud de la glucosa.
+        :type gluc_rango: list[float]
+        :param ten_sis: Rango de salud de la presión arterial.
+        :type ten_sis: int
+        :return: Nivel de gravedad del paciente.
+        :rtype: int
+        """
         hospitalizacion = 0
         # En base al índice de masa corporal: un peso muy bajo o muy alto puede ser de riesgo
         if 'kg' in paciente['peso']: 
@@ -50,7 +76,18 @@ class Generador_Datos():
 
         return hospitalizacion
 
+    @staticmethod
     def crear_errores(paciente: dict, prob: int=1) -> dict:
+        """
+        Recibe los datos de un paciente e introduce entre 0 y 1 errores por dato.
+        
+        :param paciente: Diccionario con los datos del paciente.
+        :type paciente: dict
+        :param prob: Modifica la probabilidad de introducir un error: a más alta, menor probabilidad.
+        :type prob: int
+        :return: Diccionario con datos de paciente modificado.
+        :rtype: dict
+        """
         import random
         import numpy as np
         # Definimos la probabilidad como 1/prob+1:
@@ -85,7 +122,20 @@ class Generador_Datos():
                 pass
         return paciente
 
+    @staticmethod
     def generar_datos(num: int = 100, prop_enf: float = 0.5) -> bool:
+        """
+        Genera de manera aleatoria los datos de los paciente solicitados 
+        según la proporción de hospitalizados requerida, introduce errores y 
+        guarda los datos en un archivo CSV.
+        
+        :param num: Número de pacientes a generar.
+        :type num: int
+        :param prop_enf: Proporción de pacientes que requerirán hospitalización.
+        :type prop_enf: float
+        :return: Confirmación de generación y guardado exitosos.
+        :rtype: bool
+        """
         import numpy as np
         import random
         sanos = []

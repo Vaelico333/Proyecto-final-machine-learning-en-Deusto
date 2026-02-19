@@ -163,7 +163,7 @@ class Generador_Datos():
             paciente['peso'] = random.choice([peso_kg, peso_lb])
 
             # Altura: habrá valores en cm y pulgadas
-            # El centro de la distribución será 170 cm
+            # El centro de la distribución será 160 cm
             # 1 inch = cm * 2.54
             # 1 cm = 0.3937 * inch
             altura_cm = str(round(np.random.normal(160, 8))) + ' cm'
@@ -183,7 +183,7 @@ class Generador_Datos():
             paciente['presion_arterial'] = presion
 
             # Glucosa: habrá algunos valores en mmol/l y otros en mg/dl
-            # El centro de la distribución será 180 mg/dL
+            # El centro de la distribución será 190 mg/dL
             # el estándar en España es mg/dl, así que es el que usaré
             # Fórmula: Y(mg/dl) = 17,5 * X(mmol/l) + 3,75
             glucosa_mg = str(round(np.random.normal(190, 55), 2)) + ' mg/dL'

@@ -203,21 +203,23 @@ La estructura es:
 1. Izquierda: mostramos un cuadro de texto con la valoración final y una nota de despedida. Debajo, un botón nos permite guardar el modelo creado junto con sus especificaciones y otro nos permite volver a la página de entrenamiento de los modelos.
 2. Derecha: se muestra una gráfica personalizada (impacto de las variables en LogisticRegression, un árbol de decisión para los otros dos modelos). Debajo, un cuadro de texto con un resumen de las métricas del modelo actual, y finalmente, un botón que permite volver a la primera página de la aplicación.
 
-## Módulo de interfaz
+## Modularización
+
+### Módulo de interfaz
 
 El módulo **interfaz** contiene la aplicación PyQt5 y todas sus partes.  
 
-## Módulo visual accesorio
+### Módulo visual accesorio
 
 Todos los textos a mostrar en los cuadros de texto quedaron contenidos en el módulo **textuales**, y las gráficas se generan siempre desde el módulo **graficos**.  
 
-## Módulos backend
+### Módulos backend
 
 El módulo **generador_datos** se encarga exclusivamente de crear los datos sintéticos de pacientes, introducir errores en ellos y guardar el archivo en forma de archivo CSV.  
 Desde el módulo **analisis** se gestiona la evaluación de los modelos, además del EDA, la limpieza de datos y la lectura del CSV.  
 Desde el módulo **modelos** se gestiona el entrenamiento de los modelos, sea directo o mediante validación cruzada, los hiperparámetros, el guardado del modelo y sirve de intermediario para la evaluación de los modelos.  
 
-## Módulo de control
+### Módulo de control
 
 Desde el módulo **trabajador** se gestiona tanto el control de progreso del entrenamiento de los modelos como la ejecución multihilo para evitar que la aplicación se congele al intentar gestionar a la vez la interfaz y los modelos.
 

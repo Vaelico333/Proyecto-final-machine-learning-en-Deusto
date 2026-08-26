@@ -553,8 +553,7 @@ Es una métrica que castiga la incertidumbre y el exceso de confianza al predeci
         :rtype: str
         """
         texto_final = '''<p>Y con este informe sobre la viabilidad del modelo, llegamos al final del proyecto. Debajo de este recuadro hay 3 botones, que permiten guardar el modelo, volver a creación del modelo para probar otras opciones, o volver a la página de bienvenida, por si fuera necesario crear los datos de 0.</p>
-<p>Si decido expandir la funcionalidad de esta aplicación como proyecto personal, añadiré la posibilidad de cargar un modelo guardado y más gráficas de diagnóstico, quizá incluso más opciones de modelos a crear. De momento, para este trabajo me pareció suficiente.</p>
-<p>Tardé 55 días en crear este programa, incluidas casi dos semanas en las que no pude hacer gran cosa por causas personales.</p>
+<p>Si decido expandir la funcionalidad de esta aplicación como proyecto personal, añadiré la posibilidad de cargar un modelo guardado y más gráficas de diagnóstico, quizá incluso más opciones de modelos a crear.</p>
 <br>Fdo.:<br><h3>Darío Zoreda Gallego</h3>'''
 
         texto = f'''<h2>Informe final de {nom}</h2>

@@ -7,7 +7,7 @@ from PyQt5.QtCore import QRect, Qt, pyqtSignal, QThreadPool
 from PyQt5.QtGui import QFont, QPalette, QBrush, QColor
 from servicios.textuales import Textos, Info, Informe
 from servicios.generador_datos import Generador_Datos
-from servicios.analisis import Leer_Datos, Analisis
+from servicios.analisis import Leer_Datos, Analisis, Limpieza
 from servicios.modelos import Modelo, Evaluacion
 from servicios.graficos import Eda, GrafModelo, Informes
 from servicios.trabajador import Trabajador, ControlEntrenamiento, CapturadorConsola
@@ -330,7 +330,7 @@ class PaginaEDA(QWidget):
                 info = Info.info_datos_num(col)
                 caja_texto.setText(eval(switch[nom]) + info)
                 caja_texto.adjustSize()
-                df_num = Analisis.cadena_a_numero(cols=[col], modo='columna')
+                df_num = Limpieza.cadena_a_numero(cols=[col], modo='columna')
                 self.cargar_dataframe(df_num, muestra_df)
 
         def boton_err():
@@ -340,8 +340,8 @@ class PaginaEDA(QWidget):
             """
             col = form_cols.currentText()
             if col != 'Elige una columna':
-                df_num = Analisis.cadena_a_numero(modo='num')
-                df_err = Analisis.limpiar_errores(df=df_num)
+                df_num = Limpieza.cadena_a_numero(modo='num')
+                df_err = Limpieza.limpiar_errores(df=df_num)
                 self.cargar_dataframe(df_err, muestra_df)
                 info = Info.info_datos_noerr(col)
                 caja_texto.setText(eval(switch[nom]) + info)
@@ -364,7 +364,7 @@ class PaginaEDA(QWidget):
             btn_arreglar.clicked.connect(boton_transf)
 
         elif nom == 'err':
-            df_num = Analisis.cadena_a_numero()
+            df_num = Limpieza.cadena_a_numero()
             columnas = [col for col in df_num.columns if col != 'id']
             form_cols.addItems(['Elige una columna'] + columnas)
             df_label.setText("DataFrame libre de errores")
@@ -424,7 +424,7 @@ class PaginaEDA(QWidget):
         layout_pest = QVBoxLayout()
 
         # Cargamos el DataFrame
-        df_num = Analisis.cadena_a_numero()
+        df_num = Limpieza.cadena_a_numero()
         columnas = [col for col in df_num.columns if col != 'id']
         # Creamos y poblamos el formulario desplegable
         layout_form = QHBoxLayout()

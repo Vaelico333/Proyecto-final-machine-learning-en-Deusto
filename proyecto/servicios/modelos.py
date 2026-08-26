@@ -1,4 +1,4 @@
-from servicios.analisis import Analisis
+from servicios.analisis import Analisis, Limpieza
 from servicios.trabajador import Decorador
 class Modelo():
     from pandas import DataFrame
@@ -59,7 +59,7 @@ class Modelo():
         control = kwargs['objeto_control']
 
         modelo_dicc = {}
-        df = Analisis.limpiar_errores()
+        df = Limpieza.limpiar_errores()
         X = df.drop(columns='hospitalizacion')
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
@@ -105,7 +105,7 @@ class Modelo():
                 params.append(bool(arg))
 
         modelo_dicc = {}
-        df = Analisis.limpiar_errores()
+        df = Limpieza.limpiar_errores()
         X = df.drop(columns='hospitalizacion')
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
@@ -156,7 +156,7 @@ class Modelo():
                 return False
 
         modelo_dicc = {}
-        df = Analisis.limpiar_errores()
+        df = Limpieza.limpiar_errores()
         X = df.drop(columns='hospitalizacion')
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
@@ -193,7 +193,7 @@ class Modelo():
         from joblib import parallel_backend
 
         modelo_dicc = {}
-        df = Analisis.limpiar_errores()
+        df = Limpieza.limpiar_errores()
         X = df.drop(columns='hospitalizacion')
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)

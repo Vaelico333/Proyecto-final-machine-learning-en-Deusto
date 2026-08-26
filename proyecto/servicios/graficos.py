@@ -1,4 +1,4 @@
-from servicios.analisis import Analisis
+from servicios.analisis import Limpieza
 class Eda:
     from matplotlib.figure import Figure
     from matplotlib.axes import Axes
@@ -14,7 +14,7 @@ class Eda:
         """
         col = 'hospitalizacion'
         # Recuperamos los datos
-        df_col = Analisis.cadena_a_numero()
+        df_col = Limpieza.cadena_a_numero()
         df_col = df_col['hospitalizacion']
 
         # Creamos un subplot
@@ -46,8 +46,8 @@ class Eda:
         """
         import pandas as pd
         # Recuperamos los datos
-        df_col = Analisis.cadena_a_numero()
-        df_col, datos = Analisis.limpiar_errores(df_col, col, 'columna')
+        df_col = Limpieza.cadena_a_numero()
+        df_col, datos = Limpieza.limpiar_errores(df_col, col, 'columna')
 
         # Convertimos df_col a dataframe y lo ordenamos por valores   
         df_col = pd.DataFrame(df_col)
@@ -229,7 +229,7 @@ class Informes:
         X = modelo_dict['X_test']
         if nom == 'LogisticRegression':
             coefs = modelo.coef_[0]
-            columnas = Analisis.limpiar_errores().drop(columns='hospitalizacion').columns
+            columnas = Limpieza.limpiar_errores().drop(columns='hospitalizacion').columns
             ax.barh(columnas, coefs, color=['red' if c < 0 else 'blue' for c in coefs])
             ax.axvline(0, color='black', linestyle='--')
             ax.set_title("Impacto de las Variables (Coeficientes)")

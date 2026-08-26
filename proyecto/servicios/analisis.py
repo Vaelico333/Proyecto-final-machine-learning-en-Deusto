@@ -40,8 +40,8 @@ class Leer_Datos:
             df = Leer_Datos.abrir_csv(url)
         df_muestra = pd.concat([df.head(15), df.tail(15)])
         return df_muestra
-    
-class Analisis():
+
+class Limpieza():
     from pandas import DataFrame, Series
     from numpy import ndarray
     @staticmethod
@@ -77,7 +77,7 @@ class Analisis():
     @staticmethod
     def cadena_a_numero(df: DataFrame = DataFrame(), cols: list = None, modo: str = 'num') -> DataFrame:
         """
-        Transforma un DataFrame que contiene cadena de caracteres que incluyen una cifra y la magnitud a una columna nueva que sólo incluye la cifra, y estandariza dicha cifra a una magnitud común.
+        Transforma un DataFrame, que contiene cadena de caracteres que incluyen una cifra y la magnitud, a una columna nueva que sólo incluye la cifra, y estandariza dicha cifra a una magnitud común.
         
         :param df: Dataframe a tranformar; si no se aporta, se crea de 0 desde el csv.
         :type df: DataFrame
@@ -189,7 +189,7 @@ class Analisis():
         """
         import numpy as np
         if df.empty:
-            df = Analisis.cadena_a_numero()
+            df = Limpieza.cadena_a_numero()
 
         # Identificar columnas numéricas para evitar errores de tipo
         columnas_numericas = df.select_dtypes(include=[np.number]).columns
@@ -228,6 +228,10 @@ class Analisis():
 
         return df
     
+
+class Analisis():
+    from pandas import DataFrame, Series
+    from numpy import ndarray
     @staticmethod
     def log_loss_modelo(modelo_dict: dict) -> list[float]:
         """

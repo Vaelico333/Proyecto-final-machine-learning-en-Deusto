@@ -58,6 +58,20 @@ Entrenamiento del modelo
 					
 La aplicación presenta un diseño modular, con la interfaz gráfica separada de la lógica backend.
 
+## Desafíos técnicos
+
+**Mantener la responsividad de la GUI**  
+→ Resuelto usando procesamiento multihilo  
+  
+**Manejo de datos artificiales inconsistentes**  
+→ Diseño de un mecanismo controlado de corrupción de datos y una pipeline de limpieza  
+
+**Compartir modelos entrenados entre páginas de la aplicación**  
+→ Creación de una capa de gestión de modelos y envío y recepción de datos entre páginas  
+
+**Gestión de múltiples configuraciones de los modelos**  
+→ Entrenamiento centralizado y manejo de los hiperparámetros  
+
 ## Historia
 
 Para el proyecto final del curso de Machine Learning en Deusto, se me propusieron tres opciones:
@@ -206,3 +220,28 @@ Desde el módulo **modelos** se gestiona el entrenamiento de los modelos, sea di
 ## Módulo de control
 
 Desde el módulo **trabajador** se gestiona tanto el control de progreso del entrenamiento de los modelos como la ejecución multihilo para evitar que la aplicación se congele al intentar gestionar a la vez la interfaz y los modelos.
+
+## Qué he aprendido
+
+### Lo que este proyecto demuestra
+
+- Desarrollo de aplicaciones en Python
+- Desarrollo de interfaces gráficas con PyQt5
+- Preprocesamiento de datos y EDA
+- Uso de modelos de clasificación
+- Optimización de hiperparámetros
+- Evaluación de modelos
+- Modularización de programas
+- Procesamiento multihilo
+- Visualización de datos
+
+### Lo que me gustaría mejorar
+
+- Añadir tests automatizados
+- Mejorar la gestión de errores
+- Mejorar el empaquetado en .EXE de la aplicación
+- Añadir gestión de la configuración
+- Mejorar el control sobre la inyección de errores
+- Mejorar la comparación de modelos
+- Introducir más modelos
+- Introducir la carga de modelos pre-guardados

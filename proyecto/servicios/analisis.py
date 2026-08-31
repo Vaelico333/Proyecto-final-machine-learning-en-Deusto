@@ -138,7 +138,7 @@ class Limpieza():
             a = df_res['altura'].apply(procesar_valor)
             a, p = a.replace(0, np.nan), p.replace(0, np.nan)
             media_a, media_p = a.mean(), p.mean()
-            a, p = a.fillna(media_a), p.fillna(media_p)
+            a, p = a.fillna(media_a), p.fillna(media_p)  # Se reemplazan los valores NaN por la media de valores válidos
             df_res['IMC'] = pd.to_numeric(p) / (pd.to_numeric(a)**2)
             
 
@@ -158,7 +158,10 @@ class Limpieza():
                 df_res[nueva_col] = serie.apply(procesar_valor)
 
         # Lógica de retorno según modo
-        if modo == 'total':
+        if modo not in {'total', 'num', 'columna'}:
+            raise ValueError('Modo incompatible')
+        
+        elif modo == 'total':
             return df_res
         
         elif modo == 'num':
@@ -200,7 +203,7 @@ class Limpieza():
 
         if not cols:
             for col in columnas_numericas:
-                # Convertimos negativos a positivos primero
+                # Convertimos negativos a positivos primero, dado que representan errores de signo
                 df[col] = df[col].abs()
                 
                 # Calculamos la media de valores > 0 para que sea un promedio real

@@ -304,7 +304,11 @@ class Info:
         elif col == 'hospitalizacion': # Hospitalización está siempre libre de errores
             df_noerr = ('', (0,0,0))
         else: # No cambia (edad) o no hay original (IMC)
-            df_num = Limpieza.cadena_a_numero(cols=[col], modo='columna')
+            if col == 'IMC':
+                df_num = Limpieza.cadena_a_numero(df=df, cols=[col], modo='columna')
+            else:
+                import pandas as pd
+                df_num = pd.DataFrame({col: pd.to_numeric(df[col], errors='coerce')})
             df_noerr = Limpieza.limpiar_errores(df=df_num, cols=col, modo='columna')
         
         texto = f'''

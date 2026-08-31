@@ -180,7 +180,7 @@ class Limpieza():
     @staticmethod
     def limpiar_errores(df=None, cols: str = None, modo: str = 'total') -> DataFrame | tuple[Series, tuple[int, int, int]]:
         """
-        Elimina los valores NaN, 0 y negativos de los datos.
+        Elimina los valores NaN y 0 y convierte los negativos a positivos mediante valor absoluto.
         
         :param df: Dataframe a tratar.
         :type df: pd.DataFrame

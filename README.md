@@ -162,7 +162,7 @@ Como la idea es explorar varios conceptos, decidí crear un *widget* de pestaña
 
 ### 6. Página de entrenamiento del modelo
 
-En la página de creación del modelo seleccionaremos el modelo a entrenar y los hiperparámetros correspondientes, o bien entrenar el modelo usando *GridSearchCV*, o validación cruzada en cuadrícula, que busca de entre todas las combinaciones de hiperparámetros, cuál es el mejor modelo.
+En la página de creación del modelo seleccionaremos el modelo a entrenar y los hiperparámetros correspondientes, o bien entrenar el modelo usando *GridSearchCV*, o validación cruzada en cuadrícula, que evalúa una serie de combinaciones predefinidas de hiperparámetros usando validación cruzada, y selecciona la configuración que mejor funciona según la métrica escogida.
 Aquí, para cada uno de los tres posibles modelos, creamos una pestaña, con la siguiente estructura:
 
 1. Izquierda: arriba, un selector para cada uno de los hiperparámetros, con su botón de entrenar el modelo con ellos o con validación cruzada. Más abajo, un cuadro de texto donde explicamos el modelo y sus parámetros, y finalmente, un texto con los datos del modelo ya entrenado que sólo aparece al crearlo.
@@ -171,24 +171,26 @@ Aquí, para cada uno de los tres posibles modelos, creamos una pestaña, con la 
 ### 7. Evaluación del modelo
 
 Aquí, según el modelo que se envíe desde la página anterior, se realizará la evaluación correspondiente:
+
 - LogisticRegression:
 	- Matriz de confusión: permite ver los aciertos y errores, y su tipo.
 	- Pérdida logarítmica por clase: castiga la incertidumbre y el exceso de confianza en los errores.
- 	- ROC-AUC: compara falsos positivos con verdaderos positivos a lo largo de diferentes umbrales de clasificación, indicando su capacidad de predicción.
+ 	- Curva ROC y AUC: compara falsos positivos con verdaderos positivos a lo largo de diferentes umbrales de clasificación, indicando su capacidad de predicción.
 - RandomForestClassifier:
 	- Matriz de confusión: permite ver los aciertos y errores, y su tipo.
 	-  Importancia de características: muestra qué características de los datos han ofrecido más información. Muy útil en caso de querer podar los árboles.
-  	- ROC-AUC: compara falsos positivos con verdaderos positivos a lo largo de diferentes umbrales de clasificación, indicando su capacidad de predicción.
- -  XGBoostClassifier:
+  	- Curva ROC y AUC: compara falsos positivos con verdaderos positivos a lo largo de diferentes umbrales de clasificación, indicando su capacidad de predicción.
+ -  XGBClassifier:
 	- Matriz de confusión: permite ver los aciertos y errores, y su tipo.
 	-  Importancia de características: muestra qué características de los datos han ofrecido más información. Muy útil en caso de querer podar los árboles.
-  	- ROC-AUC: compara falsos positivos con verdaderos positivos a lo largo de diferentes umbrales de clasificación, indicando su capacidad de predicción.
+  	- Curva ROC y AUC: compara falsos positivos con verdaderos positivos a lo largo de diferentes umbrales de clasificación, indicando su capacidad de predicción.
 
 El hecho de que los modelos compartan métricas, facilita su comparación. Todos los modelos evalúan la exactitud, precisión, sensibilidad y F1:
+
 - La **exactitud** nos indica cuál es el porcentaje de aciertos sobre el total de predicciones correctas. Es una *medida general* de la capacidad de predicción del modelo.
 - La **precisión** nos muestra los aciertos a la hora de marcar un dato como positivo, sobre el total de datos marcados como positivo. Mide el *entusiasmo* del modelo para marcar como positivos datos que realmente son negativos.
--  La **sensibilidad** nos indica cuántos aciertos se cometieron al intentar detectar positivos, respecto a los datos que quedaron marcados como negativos pero no lo eran. Podría decirse que mide la *precaución* del modelo a la hora de afirmar que un dato es positivo. Es especialmente importante en este ejercicio, ya que podría marcar como sanos a pacientes que sí necesitan hospitalización. Debe ser lo más alta posible.
--  La **puntuación F1** resulta de la media armónica entre la precisión y la sensibilidad. Nos indica el *desempeño general* del modelo.
+- La **sensibilidad** nos indica cuántos casos positivos reales fueron identificados correctamente por el modelo. Podría decirse que mide la *precaución* del modelo a la hora de afirmar que un dato es positivo. Es especialmente importante en este ejercicio, ya que podría marcar como sanos a pacientes que sí necesitan hospitalización. Debe ser lo más alta posible.
+- La **puntuación F1** resulta de la media armónica entre la precisión y la sensibilidad. Nos indica el *desempeño general* del modelo.
   
 La estructura es la siguiente:
 
@@ -223,7 +225,38 @@ Desde el módulo **modelos** se gestiona el entrenamiento de los modelos, sea di
 
 Desde el módulo **trabajador** se gestiona tanto el control de progreso del entrenamiento de los modelos como la ejecución multihilo para evitar que la aplicación se congele al intentar gestionar a la vez la interfaz y los modelos.
 
-## Qué he aprendido
+## Resultados
+
+Mediante esta aplicación, me ha sido posible crear y comparar los tres tipos de modelo de clasificación utilizados: regresión logística, bosque aleatorio e incremento extremo del gradiente (XGBoost).  
+Para encontrar los mejores modelos, utilicé la técnica de validación cruzada en cuadrícula (GridSearchCV). Los resultados son:
+
+### Modelo con mejores características generales
+
+El modelo que mejor F1 presenta, siendo esta métrica una media armónica de la precisión y la sensibilidad, es el modelo **XGBoost**:  
+
+- Exactitud: 0.9775  
+- Precisión: 0.9942  
+- Sensibilidad: 0.9606  
+- F1: 0.9771  
+
+Sus hiperparámetros, escogidos mediante GridSearchCV, son:  
+
+- objective: binary:logistic
+- colsample_bytree: 0.6
+- gamma: 0.2
+- learning_rate: 0.05
+- max_depth: 5
+- min_child_weight: 1
+- reg_alpha: 0
+- reg_lambda: 0
+- subsample: 0.6
+
+
+### Modelo con mejor característica para el caso (sensibilidad)
+
+
+
+## Qué he aprendido de la comparación
 
 ### Lo que este proyecto demuestra
 

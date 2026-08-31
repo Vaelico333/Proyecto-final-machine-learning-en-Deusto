@@ -1,4 +1,4 @@
-from servicios.analisis import Leer_Datos, Analisis
+from servicios.analisis import Leer_Datos, Limpieza
 
 class Textos:
     @staticmethod
@@ -255,7 +255,7 @@ class Info:
         """
         # Extraemos los datos
         df = Leer_Datos.abrir_csv(url)
-        df_num = Analisis.cadena_a_numero(df=df, cols=[col], modo='columna')
+        df_num = Limpieza.cadena_a_numero(df=df, cols=[col], modo='columna')
 
         # Creamos la info como una lista
         lista_texto = Info.crear_info(df_num)
@@ -299,13 +299,13 @@ class Info:
                     'glucosa_mg_dL':'glucosa'}
         df = Leer_Datos.abrir_csv(url) # Leemos los datos
         if col in columnas.keys(): # Analizamos la columna original
-            df_num = Analisis.cadena_a_numero(df=df, cols=[columnas[col]], modo='columna')
-            df_noerr = Analisis.limpiar_errores(df=df_num, cols=col, modo='columna')
+            df_num = Limpieza.cadena_a_numero(df=df, cols=[columnas[col]], modo='columna')
+            df_noerr = Limpieza.limpiar_errores(df=df_num, cols=col, modo='columna')
         elif col == 'hospitalizacion': # Hospitalización está siempre libre de errores
             df_noerr = ('', (0,0,0))
         else: # No cambia (edad) o no hay original (IMC)
-            df_num = Analisis.cadena_a_numero(cols=[col], modo='columna')
-            df_noerr = Analisis.limpiar_errores(df=df_num, cols=col, modo='columna')
+            df_num = Limpieza.cadena_a_numero(cols=[col], modo='columna')
+            df_noerr = Limpieza.limpiar_errores(df=df_num, cols=col, modo='columna')
         
         texto = f'''
 Recuento de errores en la columna <i>{col}</i>:

@@ -16,7 +16,8 @@ class Modelo():
         parametros_reglog = {'l1_ratio':[1.0,0.5,0],
                              'C':[0.01, 0.1, 1.0, 10.0],
                              'solver':['liblinear','newton-cg','saga'],
-                             'max_iter':[100, 1000, 10000]}
+                             'max_iter':[100, 1000, 10000],
+                             'penalty':['elasticnet']}
         
         parametros_bosque = {'n_estimators':[100, 200],
                              'max_depth':[5, 10],
@@ -230,6 +231,8 @@ class Modelo():
                 refit=False,
                 aggressive_elimination=True,
                 verbose=3)
+        # Se mantienen los estimadores individuales con un único hilo (n_jobs) durante la búsqueda
+        # para que HalvingGridSearchCV controle el paralelismo. 
         with parallel_backend('threading'):
             hgscv.fit(X_train, y_train)
 
@@ -251,7 +254,7 @@ class Modelo():
             if nom == 'xgb':
                 X_fit, X_val, y_fit, y_val = train_test_split(
                     X_train, y_train, test_size=0.2, random_state=17, stratify=y_train)
-                modelo_final = XGBClassifier(**mejores, random_state=17, n_jobs=-1, eval_metric='auc', early_stopping_rounds=10, gamma=0.2)
+                modelo_final = XGBClassifier(**mejores, random_state=17, n_jobs=-1, eval_metric='auc', early_stopping_rounds=10)
                 modelo_final.fit(X_fit, y_fit,
                                 eval_set=[(X_fit, y_fit), (X_val, y_val)])
             else:

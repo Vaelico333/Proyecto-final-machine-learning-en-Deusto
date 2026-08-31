@@ -1,6 +1,6 @@
 # Predicción de hospitalización de pacientes - Aplicación de escritorio basada en Python
 
-[Resumen](#resumen-del-proyecto) · [Características](#características-clave) · [Arquitectura](#arquitectura) · [Desafíos](#desafíos-técnicos) · [Propósito](#propósito-del-proyecto)
+[Resumen](#resumen-del-proyecto) · [Características](#características-clave) · [Arquitectura](#arquitectura) · [Desafíos](#desafíos-técnicos) · [Propósito](#propósito-del-proyecto)  
 [Fases](#fases-del-desarrollo) · [Módulos](#modularización) · [Aprendizaje](#qué-he-aprendido)
 
 ## Resumen del proyecto

@@ -30,7 +30,7 @@ Entrenamiento del modelo
 - Limpieza de datos y normalización de unidades
 - EDA: Análisis Exploratorio de los Datos
 - Varios algoritmos de clasificación
-- Uso de GridSearchCV para selección de hiperparámetros
+- Uso de HalvingGridSearchCV para selección de hiperparámetros
 - Validación cruzada
 - Evaluación y comparación de modelos
 - Visualización de la matriz de confusión y la curva ROC
@@ -165,7 +165,7 @@ Como la idea es explorar varios conceptos, decidí crear un *widget* de pestaña
 
 ### 6. Página de entrenamiento del modelo
 
-En la página de creación del modelo seleccionaremos el modelo a entrenar y los hiperparámetros correspondientes, o bien entrenar el modelo usando *GridSearchCV*, o validación cruzada en cuadrícula, que evalúa una serie de combinaciones predefinidas de hiperparámetros usando validación cruzada, y selecciona la configuración que mejor funciona según la métrica escogida.
+En la página de creación del modelo seleccionaremos el modelo a entrenar y los hiperparámetros correspondientes, o bien entrenar el modelo usando *HalvingGridSearchCV*, o validación cruzada en cuadrícula eliminatoria, que evalúa una serie de combinaciones predefinidas de hiperparámetros usando validación cruzada, y selecciona la configuración que mejor funciona según la métrica escogida. Es más eficiente que GridSearchCV, ya no necesita evaluar todas las opciones disponibles, sino que evalúa todos los modelos con pocos datos y escoge la mitad más eficiente, y así sucesivamente hasta encontrar el mejor. Al otorgarle el hiperparámetro *cv=3*, se consigue que se entrenen dos versiones del modelo, y se valide en la tercera.
 Aquí, para cada uno de los tres posibles modelos, creamos una pestaña, con la siguiente estructura:
 
 1. Izquierda: arriba, un selector para cada uno de los hiperparámetros, con su botón de entrenar el modelo con ellos o con validación cruzada. Más abajo, un cuadro de texto donde explicamos el modelo y sus parámetros, y finalmente, un texto con los datos del modelo ya entrenado que sólo aparece al crearlo.
@@ -231,7 +231,7 @@ Desde el módulo **trabajador** se gestiona tanto el control de progreso del ent
 ## Resultados
 
 Mediante esta aplicación, me ha sido posible crear y comparar los tres tipos de modelo de clasificación utilizados: regresión logística, bosque aleatorio e incremento extremo del gradiente (XGBoost).  
-Para encontrar los mejores modelos, utilicé la técnica de validación cruzada en cuadrícula (GridSearchCV). Los resultados son:
+Para encontrar los mejores modelos, utilicé la técnica de validación cruzada en cuadrícula (HalvingGridSearchCV). Los resultados son:
 
 ### Modelo con mejores características generales
 
@@ -242,7 +242,7 @@ El modelo que mejor F1 presenta, siendo esta métrica una media armónica de la 
 - Sensibilidad: 0.9606  
 - F1: 0.9771  
 
-Sus hiperparámetros, escogidos mediante GridSearchCV, son:  
+Sus hiperparámetros, escogidos mediante HalvingGridSearchCV, son:  
 
 - objective: binary:logistic
 - colsample_bytree: 0.6

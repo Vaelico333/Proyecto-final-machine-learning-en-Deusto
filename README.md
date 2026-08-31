@@ -29,7 +29,7 @@ Entrenamiento del modelo
 - Inyección de errores automática
 - Limpieza de datos y normalización de unidades
 - EDA: Análisis Exploratorio de los Datos
-- Varios algoritmos de clasificación
+- Tres algoritmos de clasificación
 - Uso de HalvingGridSearchCV para selección de hiperparámetros
 - Validación cruzada
 - Evaluación y comparación de modelos

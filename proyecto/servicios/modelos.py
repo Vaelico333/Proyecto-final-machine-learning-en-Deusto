@@ -13,34 +13,32 @@ class Modelo():
         :return: Diccionario con todos los hiperparámetros posibles del modelo solicitado.
         :rtype: dict
         """
-        import numpy as np
-        # Debido a que la interfaz requiere de strings para generar los botones, los hiperparámetros se definen como strings y se convierten a float, int o bool en el entrenamiento.
-        parametros_reglog = {'l1_ratio':['1.0','0.5','0'],
-                             'C':['0.01', '0.1', '1.0', '10'],
+        parametros_reglog = {'l1_ratio':[1.0,0.5,0],
+                             'C':[0.01, 0.1, 1.0, 10.0],
                              'solver':['liblinear','newton-cg','saga'],
-                             'max_iter':['100','1000','10000']}
+                             'max_iter':[100, 1000, 10000]}
         
-        parametros_bosque = {'n_estimators':['100','200'],
-                             'max_depth':['5','10'],
-                             'min_samples_split':['10','25','50'],
-                             'min_samples_leaf':['1','5','10','20'],
-                             'max_features':['1', '3', '5'],
-                             'bootstrap':['True','False']}
+        parametros_bosque = {'n_estimators':[100, 200],
+                             'max_depth':[5, 10],
+                             'min_samples_split':[10, 25, 50],
+                             'min_samples_leaf':[1, 5, 10, 20],
+                             'max_features':[1, 3, 5],
+                             'bootstrap':[True,False]}
         
-        parametros_xgb = {'n_estimators':['100','300'],
-                          'learning_rate':['0.05','0.15', '0.3'],
-                          'max_depth':['5','7'],
-                          'min_child_weight':['1','3'],
-                          'subsample':['0.6','0.9'],
-                          'colsample_bytree':['0.6','0.9'],
-                          'reg_alpha':['0','1'],
-                          'reg_lambda':['0','1']}
+        parametros_xgb = {'n_estimators':[100, 300],
+                          'learning_rate':[0.05, 0.15, 0.3],
+                          'max_depth':[5, 7],
+                          'min_child_weight':[1, 3],
+                          'subsample':[0.6, 0.9],
+                          'colsample_bytree':[0.6, 0.9],
+                          'reg_alpha':[0, 1],
+                          'reg_lambda':[0, 1]}
         
-        switch = {'reglog':'parametros_reglog',
-                  'bosque':'parametros_bosque',
-                  'xgb':'parametros_xgb'}
+        switch = {'reglog': parametros_reglog,
+              'bosque': parametros_bosque,
+              'xgb': parametros_xgb}
         
-        return eval(switch[modelo])
+        return switch[modelo]
     
     
     @Decorador.progreso
@@ -55,8 +53,6 @@ class Modelo():
         from sklearn.preprocessing import StandardScaler
         from sklearn.model_selection import train_test_split
         from sklearn.linear_model import LogisticRegression
-        from sklearn.pipeline import Pipeline
-
         reporte = kwargs['reporte_progreso']
         control = kwargs['objeto_control']
 
@@ -68,10 +64,10 @@ class Modelo():
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
 
-        l1_ratio = float(args[0]) if args[0] != 'None' else None
-        C = float(args[1])
+        l1_ratio = args[0]
+        C = args[1]
         solver = args[2]
-        max_iter = int(args[3])
+        max_iter = args[3]
 
         if solver in ['liblinear', 'newton-cg']:
             l1_ratio = None
@@ -112,17 +108,6 @@ class Modelo():
         reporte = kwargs['reporte_progreso']
         control = kwargs['objeto_control']
 
-        params = []
-        for arg in args:
-            try:
-                params.append(int(arg))
-            except ValueError:
-                if arg.lower() == 'true':
-                    arg = True
-                elif arg.lower() == 'false':
-                    arg = False
-                params.append(arg)
-
         modelo_dicc = {}
         df = Limpieza.limpiar_errores()
         X = df.drop(columns='hospitalizacion')
@@ -133,10 +118,9 @@ class Modelo():
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
-        lista_params = [int(item) for item in args[:-1]]
-        lista_params.append(bool(args[-1]))
-        modelo =  RandomForestClassifier(n_estimators=1, max_depth=lista_params[1], min_samples_split=lista_params[2],
-                                    min_samples_leaf=lista_params[3], max_features=lista_params[4], bootstrap=lista_params[5], 
+        n_estimators, max_depth, min_samples_split, min_samples_leaf, max_features, bootstrap = args
+        modelo =  RandomForestClassifier(n_estimators=1, max_depth=max_depth, min_samples_split=min_samples_split,
+                        min_samples_leaf=min_samples_leaf, max_features=max_features, bootstrap=bootstrap, 
                                     random_state=17, warm_start=True, n_jobs=1)
         for n in range(1, control.total_pasos+1):
             modelo.n_estimators = n
@@ -163,12 +147,7 @@ class Modelo():
         reporte = kwargs['reporte_progreso']
         control = kwargs['objeto_control']
 
-        parametros = []
-        for n, arg in enumerate(args):
-            if n in [0, 2, 3, 6, 7]:
-                parametros.append(int(arg))
-            else:
-                parametros.append(float(arg))
+        n_estimators, learning_rate, max_depth, min_child_weight, subsample, colsample_bytree, reg_alpha, reg_lambda = args
 
         class BarraProgresoLlamada(xgboost.callback.TrainingCallback):
             def after_iteration(self, model, epoch, evals_log):
@@ -182,16 +161,18 @@ class Modelo():
         y = df['hospitalizacion'].map(mapa)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
+        X_fit, X_val, y_fit, y_val = train_test_split(
+            X_train, y_train, test_size=0.2, random_state=17, stratify=y_train)
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
-        modelo = XGBClassifier(n_estimators=control.total_pasos, learning_rate=parametros[1],
-                               max_depth=parametros[2], min_child_weight=parametros[3], 
-                               subsample=parametros[4], colsample_bytree=parametros[5], 
-                               reg_alpha=parametros[6], reg_lambda=parametros[7],
+        modelo = XGBClassifier(n_estimators=n_estimators, learning_rate=learning_rate,
+                       max_depth=max_depth, min_child_weight=min_child_weight, 
+                       subsample=subsample, colsample_bytree=colsample_bytree, 
+                       reg_alpha=reg_alpha, reg_lambda=reg_lambda,
                                 callbacks=[BarraProgresoLlamada()], eval_metric='auc', early_stopping_rounds=10)
-        modelo.fit(X_train, y_train,
-                    eval_set=[(X_train, y_train), (X_test, y_test)])
+        modelo.fit(X_fit, y_fit,
+                eval_set=[(X_fit, y_fit), (X_val, y_val)])
         modelo_dicc['modelo'] = modelo
         modelo_dicc['y_pred'] = modelo.predict(X_test)
         return modelo_dicc
@@ -225,37 +206,6 @@ class Modelo():
 
         parametros = Modelo.params(nom)
 
-        floats = ['l1_ratio','C', 'learning_rate','subsample','colsample_bytree']
-        enteros = ['max_iter', 'n_estimators', 'max_depth','min_samples_split', 'min_samples_leaf','max_features',
-                    'min_child_weight','reg_alpha','reg_lambda']
-        booleanos = ['bootstrap']
-
-        parametros_convertidos = {}
-        for k, v in parametros.items():
-            if k in floats:
-                lista = []
-                for item in v:
-                    lista.append(float(item))
-                parametros_convertidos[k] = lista
-            elif k in enteros:
-                lista = []
-                for item in v:
-                    lista.append(int(item))
-                parametros_convertidos[k] = lista
-            elif k in booleanos:
-                lista = []
-                for item in v:
-                    if item.lower() == 'true':
-                        item = True
-                    elif item.lower() == 'false':
-                        item = False
-                    lista.append(bool(item))
-                parametros_convertidos[k] = lista
-            else:
-                if v == 'None':
-                    parametros_convertidos[k] = None
-                else:
-                    parametros_convertidos[k] = v
         if nom == 'reglog':
             modelo = LogisticRegression(random_state=17, n_jobs=1)
             mod = LogisticRegression
@@ -270,7 +220,7 @@ class Modelo():
         # Solamente busco hiperparámetros
         hgscv = HalvingGridSearchCV(
                 modelo, 
-                parametros_convertidos, 
+                parametros, 
                 factor=4, 
                 resource='n_samples', 
                 max_resources=len(X_train),
@@ -299,9 +249,11 @@ class Modelo():
         else:
             modelo_final = mod(**mejores, random_state=17, n_jobs=-1)
             if nom == 'xgb':
+                X_fit, X_val, y_fit, y_val = train_test_split(
+                    X_train, y_train, test_size=0.2, random_state=17, stratify=y_train)
                 modelo_final = XGBClassifier(**mejores, random_state=17, n_jobs=-1, eval_metric='auc', early_stopping_rounds=10, gamma=0.2)
-                modelo_final.fit(X_train, y_train,
-                                eval_set=[(X_train, y_train), (X_test, y_test)])
+                modelo_final.fit(X_fit, y_fit,
+                                eval_set=[(X_fit, y_fit), (X_val, y_val)])
             else:
                 modelo_final.fit(X_train, y_train)
             modelo_dicc['X_test'] = X_test

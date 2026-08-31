@@ -641,18 +641,18 @@ class CreacionModelo(QWidget):
 
                 params = [] # Recogemos los parámetros seleccionados en los formularios
                 for k, v in parametros.items():
-                    params.append(v.currentText())
+                    params.append(v.currentData())
                 
                 if nom == 'reglog':
-                    control_entrenamiento.total_pasos = int(parametros['max_iter'].currentText()) # El número total de pasos de la barra de progreso será "max_iter"
+                    control_entrenamiento.total_pasos = parametros['max_iter'].currentData() # El número total de pasos de la barra de progreso será "max_iter"
                     trabajador = Trabajador(Modelo.reglog, *params, objeto_control=control_entrenamiento) # Gestiona el entrenamiento del modelo
 
                 elif nom == 'bosque':
-                    control_entrenamiento.total_pasos = int(parametros['n_estimators'].currentText()) # El número total de pasos de la barra de progreso será "n_estimators"
+                    control_entrenamiento.total_pasos = parametros['n_estimators'].currentData() # El número total de pasos de la barra de progreso será "n_estimators"
                     trabajador = Trabajador(Modelo.bosque, *params, objeto_control=control_entrenamiento) # Gestiona el entrenamiento del modelo
 
                 elif nom == 'xgb':
-                    control_entrenamiento.total_pasos = int(parametros['n_estimators'].currentText()) # El número total de pasos de la barra de progreso será "n_estimators"
+                    control_entrenamiento.total_pasos = parametros['n_estimators'].currentData() # El número total de pasos de la barra de progreso será "n_estimators"
                     trabajador = Trabajador(Modelo.xgb, *params, objeto_control=control_entrenamiento) # Gestiona el entrenamiento del modelo
 
                 trabajador.señales.progreso.connect(barra_progreso_total.setValue) # El trabajador emite una señal de progreso que conectamos con la barra de progreso
@@ -816,7 +816,8 @@ class CreacionModelo(QWidget):
             titulo = QLabel(k.capitalize())
 
             combo = QComboBox()
-            combo.addItems(v)
+            for valor in v:
+                combo.addItem(str(valor), userData=valor)
             parametros[k] = combo
 
             form_layout.addWidget(titulo)

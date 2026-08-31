@@ -1,0 +1,29 @@
+Parámetros del modelo RandomForestClassifier:
+bootstrap: True
+ccp_alpha: 0.0
+criterion: gini
+max_depth: 10
+max_features: 3
+min_impurity_decrease: 0.0
+min_samples_leaf: 1
+min_samples_split: 25
+min_weight_fraction_leaf: 0.0
+n_estimators: 200
+n_jobs: -1
+oob_score: False
+random_state: 17
+verbose: 0
+warm_start: False
+
+Indicadores clave de rendimiento (KPIs):
+Exactitud: 0.9802
+Precisión: 0.9998
+Sensibilidad: 0.9605
+F1: 0.9798
+
+Versión de Scikit-Learn: 1.8.0
+
+Número de entradas en el conjunto de datos: 50000
+Proporción de hospitalizaciones:
+Sí: 50.00%
+No: 50.00%

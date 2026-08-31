@@ -1,4 +1,4 @@
-from servicios.analisis import Analisis, Limpieza
+from servicios.analisis import Analisis, Limpieza, Leer_Datos
 from servicios.trabajador import Decorador
 class Modelo():
     from pandas import DataFrame
@@ -290,6 +290,7 @@ class Modelo():
         import joblib
         import xgboost
         import sklearn
+        import pandas as pd
 
         hora_actual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         nom_modelo = type(modelo).__name__
@@ -340,7 +341,14 @@ class Modelo():
             specs += f'\nVersión de Scikit-Learn: {sklearn.__version__}'
         elif nom_modelo == 'XGBClassifier':
             specs += f'\nVersión de XGBoost: {xgboost.__version__}'
-            
+
+        df = Leer_Datos.abrir_csv()
+        entradas = len(df)
+        proporcion = df['hospitalizacion'].value_counts(normalize=True)
+        specs += f'\n\nNúmero de entradas en el conjunto de datos: {entradas}\n'
+        print(proporcion)
+        specs += f'Proporción de hospitalizaciones:\nSí: {proporcion["Sí"]*100}%\nNo: {proporcion["No"]*100}%\n'
+        
         with open(url_archivo_specs, 'w', encoding='UTF-8') as f:
             f.write(specs)
 

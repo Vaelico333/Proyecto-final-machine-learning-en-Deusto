@@ -80,7 +80,7 @@ class Modelo():
             modelo.fit(X_train, y_train)
             reporte(n)
             modelo_dicc['modelo'] = modelo
-            return modelo_dicc
+        return modelo_dicc
 
     @Decorador.progreso
     @staticmethod
@@ -102,7 +102,11 @@ class Modelo():
             try:
                 params.append(int(arg))
             except ValueError:
-                params.append(bool(arg))
+                if arg.lower() == 'true':
+                    arg = True
+                elif arg.lower() == 'false':
+                    arg = False
+                params.append(arg)
 
         modelo_dicc = {}
         df = Limpieza.limpiar_errores()
@@ -224,6 +228,10 @@ class Modelo():
             elif k in booleanos:
                 lista = []
                 for item in v:
+                    if item.lower() == 'true':
+                        item = True
+                    elif item.lower() == 'false':
+                        item = False
                     lista.append(bool(item))
                 parametros_convertidos[k] = lista
             else:
@@ -295,13 +303,19 @@ class Modelo():
         hora_actual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         nom_modelo = type(modelo).__name__
 
-        
+        raiz_proyecto = os.path.dirname(os.path.dirname(__file__))
+        url_resultados = os.path.join(raiz_proyecto, "resultados")
+        if not os.path.exists(url_resultados):
+            os.makedirs(url_resultados, exist_ok=True)
+        url_modelo = os.path.join(url_resultados, f"{nom_modelo}_{hora_actual}")
+        os.makedirs(url_modelo, exist_ok=True)
         nom_archivo_specs = f'specs_{nom_modelo}_{hora_actual}.txt'
-        url_archivo_specs = os.path.join(os.path.dirname(__file__), nom_archivo_specs)
+        url_archivo_specs = os.path.join(url_modelo, nom_archivo_specs)
+        print(url_archivo_specs)
 
         if nom_modelo == 'XGBClassifier':
             nom_archivo_modelo = f'{nom_modelo}_{hora_actual}.ubj'
-            url_archivo_modelo = os.path.join(os.path.dirname(__file__), nom_archivo_modelo)
+            url_archivo_modelo = os.path.join(url_modelo, nom_archivo_modelo)
             parametros = modelo.get_xgb_params()
             modelo.save_model(url_archivo_modelo)
             if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
@@ -316,7 +330,7 @@ class Modelo():
 
         elif nom_modelo == 'LogisticRegression' or nom_modelo == 'RandomForestClassifier':
             nom_archivo_modelo = f'{nom_modelo}_{hora_actual}.pkl'
-            url_archivo_modelo = os.path.join(os.path.dirname(__file__), nom_archivo_modelo)
+            url_archivo_modelo = os.path.join(url_modelo, nom_archivo_modelo)
             parametros = modelo.get_params()
             joblib.dump(modelo, url_archivo_modelo)
             if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
@@ -327,6 +341,7 @@ class Modelo():
                     mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
             else:
                 mensaje = f"Error: El archivo '{url_archivo_modelo}' no se encontró o está vacío."
+        print(url_archivo_modelo)
 
         specs = ''
         specs += f'Parámetros del modelo {nom_modelo}:\n'

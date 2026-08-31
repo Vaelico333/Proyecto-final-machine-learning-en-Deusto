@@ -24,7 +24,7 @@ class Leer_Datos:
         return df
     
     @staticmethod
-    def muestra_df(url: str = 'datos_forjados.csv', df = pd.DataFrame()) -> pd.DataFrame | pd.Series:
+    def muestra_df(url: str = 'datos_forjados.csv', df=None) -> pd.DataFrame | pd.Series:
         """
         Docstring for muestra_df
         
@@ -36,8 +36,10 @@ class Leer_Datos:
         :rtype: DataFrame | Series
         """
         import pandas as pd
-        if df.empty:  
+        if df is None:
             df = Leer_Datos.abrir_csv(url)
+        if isinstance(df, pd.Series):
+            return pd.concat([df.head(15), df.tail(15)])
         df_muestra = pd.concat([df.head(15), df.tail(15)])
         return df_muestra
 
@@ -75,7 +77,7 @@ class Limpieza():
         return num
 
     @staticmethod
-    def cadena_a_numero(df: DataFrame = DataFrame(), cols: list = None, modo: str = 'num') -> DataFrame:
+    def cadena_a_numero(df=None, cols: list = None, modo: str = 'num') -> DataFrame:
         """
         Transforma un DataFrame, que contiene cadena de caracteres que incluyen una cifra y la magnitud, a una columna nueva que sólo incluye la cifra, y estandariza dicha cifra a una magnitud común.
         
@@ -91,7 +93,7 @@ class Limpieza():
         import pandas as pd
         import numpy as np
 
-        if df.empty:
+        if df is None:
             df = Leer_Datos.abrir_csv()
 
         # Mapeo de nuevas columnas
@@ -174,7 +176,7 @@ class Limpieza():
         return df_res
 
     @staticmethod
-    def limpiar_errores(df: DataFrame = DataFrame(), cols: str = None, modo: str = 'total') -> DataFrame | tuple[Series, tuple[int, int, int]]:
+    def limpiar_errores(df=None, cols: str = None, modo: str = 'total') -> DataFrame | tuple[Series, tuple[int, int, int]]:
         """
         Elimina los valores NaN, 0 y negativos de los datos.
         
@@ -188,7 +190,7 @@ class Limpieza():
         :rtype: DataFrame
         """
         import numpy as np
-        if df.empty:
+        if df is None:
             df = Limpieza.cadena_a_numero()
 
         # Identificar columnas numéricas para evitar errores de tipo

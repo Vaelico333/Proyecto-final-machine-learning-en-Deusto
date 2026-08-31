@@ -1,4 +1,7 @@
-# Predicción de hospitalización de pacientes - Aplicación de escritorio basada en Python 
+# Predicción de hospitalización de pacientes - Aplicación de escritorio basada en Python
+
+[Resumen](#resumen-del-proyecto) · [Características](#características-clave) · [Arquitectura](#arquitectura) · [Desafíos](#desafíos-técnicos) · [Propósito](#propósito-del-proyecto)
+[Fases](#fases-del-desarrollo) · [Módulos](#modularización) · [Aprendizaje](#qué-he-aprendido)
 
 ## Resumen del proyecto
 
@@ -72,7 +75,7 @@ La aplicación presenta un diseño modular, con la interfaz gráfica separada de
 **Gestión de múltiples configuraciones de los modelos**  
 → Entrenamiento centralizado y manejo de los hiperparámetros  
 
-## Historia
+## Propósito del proyecto
 
 Para el proyecto final del curso de Machine Learning en Deusto, se me propusieron tres opciones:
 
@@ -256,7 +259,7 @@ Sus hiperparámetros, escogidos mediante GridSearchCV, son:
 
 
 
-## Qué he aprendido de la comparación
+## Qué he aprendido 
 
 ### Lo que este proyecto demuestra
 

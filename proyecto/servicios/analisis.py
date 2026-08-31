@@ -15,13 +15,14 @@ class Leer_Datos:
         import pandas as pd
         import os
         url = os.path.join(os.path.dirname(__file__), url)
-        try:
-            with open(url,'r',encoding='UTF-8') as file:
-                df = pd.read_csv(file)
-        except FileNotFoundError:
-            Generador_Datos.generar_datos(1)
-            df = Leer_Datos.abrir_csv()
-        return df
+        if not os.path.exists(url):
+            Generador_Datos.generar_datos(100)
+    
+        if not os.path.exists(url):
+            raise FileNotFoundError('No se pudo generar el archivo')
+
+        with open(url,'r',encoding='UTF-8') as file:
+            return pd.read_csv(file)
     
     @staticmethod
     def muestra_df(url: str = 'datos_forjados.csv', df=None) -> pd.DataFrame | pd.Series:

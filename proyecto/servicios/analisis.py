@@ -121,7 +121,7 @@ class Limpieza():
                         num = float(val.replace(sufijo, '').strip())
                         return round(num * factor, 2)
                 return float(val) # Si no tiene unidad, intenta convertir a float
-            except:
+            except(TypeError, ValueError):
                 return np.nan
             
         # Si no se pasan columnas, usamos las que están en nuestro mapeo y existan en el df

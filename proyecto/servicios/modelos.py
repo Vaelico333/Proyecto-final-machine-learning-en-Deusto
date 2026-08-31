@@ -14,6 +14,7 @@ class Modelo():
         :rtype: dict
         """
         import numpy as np
+        # Debido a que la interfaz requiere de strings para generar los botones, los hiperparámetros se definen como strings y se convierten a float, int o bool en el entrenamiento.
         parametros_reglog = {'l1_ratio':['1.0','0.5','0'],
                              'C':['0.01', '0.1', '1.0', '10'],
                              'solver':['liblinear','newton-cg','saga'],

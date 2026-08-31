@@ -55,6 +55,7 @@ class Modelo():
         from sklearn.preprocessing import StandardScaler
         from sklearn.model_selection import train_test_split
         from sklearn.linear_model import LogisticRegression
+        from sklearn.pipeline import Pipeline
 
         reporte = kwargs['reporte_progreso']
         control = kwargs['objeto_control']
@@ -65,9 +66,7 @@ class Modelo():
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
 
-        scaler_X= StandardScaler()
-        X_sc = scaler_X.fit_transform(X)
-        X_train, X_test, y_train, y_test = train_test_split(X_sc, y, random_state=17)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
@@ -76,11 +75,21 @@ class Modelo():
         solver = args[2]
         max_iter = int(args[3])
 
-        modelo = LogisticRegression(l1_ratio=l1_ratio, C=C, solver=solver, max_iter=1, class_weight='balanced')
-        for n in range(1, max_iter+1):
+        modelo = Pipeline([
+            ("scaler", StandardScaler()),
+            ("model", LogisticRegression(
+                l1_ratio=l1_ratio,
+                C=C,
+                solver=solver,
+                max_iter=max_iter,
+                class_weight='balanced',
+                random_state=17
+            ))
+        ])
+        for n in range(1, max_iter + 1):
             modelo.fit(X_train, y_train)
             reporte(n)
-            modelo_dicc['modelo'] = modelo
+        modelo_dicc['modelo'] = modelo
         return modelo_dicc
 
     @Decorador.progreso
@@ -115,7 +124,7 @@ class Modelo():
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
@@ -166,7 +175,7 @@ class Modelo():
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
@@ -203,7 +212,7 @@ class Modelo():
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
         modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
@@ -250,7 +259,8 @@ class Modelo():
             modelo = XGBClassifier(tree_method='hist', device='cpu', random_state=17, n_jobs=1)
             mod = XGBClassifier
 
-        
+
+        # Solamente busco hiperparámetros
         hgscv = HalvingGridSearchCV(
                 modelo, 
                 parametros_convertidos, 
@@ -266,6 +276,7 @@ class Modelo():
         with parallel_backend('threading'):
             hgscv.fit(X_train, y_train)
 
+        #Escojo la mejor configuración y entreno con ella el mejor modelo
         mejores = hgscv.best_params_
         modelo_final = mod(**mejores, random_state=17, n_jobs=-1)
         if nom == 'xgb':

@@ -71,6 +71,8 @@ class Limpieza():
         for factor in args:
             # Por cada posible factor de conversión, aplicamos el patrón y extraemos el operador y la cantidad por separado
             match = re.match(patron, factor)
+            if not match:
+                raise ValueError(f"Operación de conversión inválida: {factor}")
             operacion, numero = match.groups()
             # Aplicamos la operación correspondiente al número original
             num = operadores[operacion](num, float(numero))

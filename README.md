@@ -37,6 +37,7 @@ Entrenamiento del modelo
 - Análisis de importancia de características
 - Persistencia de los modelos a través del proceso
 - Entrenamiento de modelos multihilo
+- Visualización del control del progreso del entrenamiento mediante script personalizado.  
 - Interfaz gráfica con PyQt5
 
 ## Arquitectura

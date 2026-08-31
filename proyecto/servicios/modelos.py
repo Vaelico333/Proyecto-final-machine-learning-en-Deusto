@@ -67,29 +67,34 @@ class Modelo():
         y = df['hospitalizacion'].map(mapa)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
-        modelo_dicc['X_test'] = X_test
-        modelo_dicc['y_test'] = y_test
 
         l1_ratio = float(args[0]) if args[0] != 'None' else None
         C = float(args[1])
         solver = args[2]
         max_iter = int(args[3])
 
-        modelo = Pipeline([
-            ("scaler", StandardScaler()),
-            ("model", LogisticRegression(
-                l1_ratio=l1_ratio,
-                C=C,
-                solver=solver,
-                max_iter=max_iter,
-                class_weight='balanced',
-                random_state=17
-            ))
-        ])
+        if solver in ['liblinear', 'newton-cg']:
+            l1_ratio = None
+
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+        modelo_dicc['X_test'] = X_test
+        modelo_dicc['y_test'] = y_test
+
+        modelo = LogisticRegression(
+            l1_ratio=l1_ratio,
+            C=C,
+            solver=solver,
+            max_iter=max_iter,
+            class_weight='balanced',
+            random_state=17
+        )
         for n in range(1, max_iter + 1):
             modelo.fit(X_train, y_train)
             reporte(n)
         modelo_dicc['modelo'] = modelo
+        modelo_dicc['y_pred'] = modelo.predict(X_test)
         return modelo_dicc
 
     @Decorador.progreso
@@ -138,6 +143,7 @@ class Modelo():
             modelo.fit(X_train, y_train)
             reporte(n)
         modelo_dicc['modelo'] = modelo
+        modelo_dicc['y_pred'] = modelo.predict(X_test)
 
         return modelo_dicc
 
@@ -187,6 +193,7 @@ class Modelo():
         modelo.fit(X_train, y_train,
                     eval_set=[(X_train, y_train), (X_test, y_test)])
         modelo_dicc['modelo'] = modelo
+        modelo_dicc['y_pred'] = modelo.predict(X_test)
         return modelo_dicc
     
     @staticmethod
@@ -204,6 +211,7 @@ class Modelo():
         from sklearn.ensemble import RandomForestClassifier
         from xgboost import XGBClassifier
         from sklearn.model_selection import train_test_split
+        from sklearn.preprocessing import StandardScaler
         from joblib import parallel_backend
 
         modelo_dicc = {}
@@ -213,7 +221,6 @@ class Modelo():
         y = df['hospitalizacion'].map(mapa)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
-        modelo_dicc['X_test'] = X_test
         modelo_dicc['y_test'] = y_test
 
         parametros = Modelo.params(nom)
@@ -278,19 +285,30 @@ class Modelo():
 
         #Escojo la mejor configuración y entreno con ella el mejor modelo
         mejores = hgscv.best_params_
-        modelo_final = mod(**mejores, random_state=17, n_jobs=-1)
-        if nom == 'xgb':
-            modelo_final = XGBClassifier(**mejores, random_state=17, n_jobs=-1, eval_metric='auc', early_stopping_rounds=10, gamma=0.2)
-            modelo_final.fit(X_train, y_train,
-                            eval_set=[(X_train, y_train), (X_test, y_test)])
-        elif nom == 'reglog':
+        if nom == 'reglog':
+            if mejores.get('solver') in ['liblinear', 'newton-cg']:
+                mejores.pop('l1_ratio', None)
+            if 'l1_ratio' in mejores and mejores['l1_ratio'] == 0:
+                mejores['l1_ratio'] = 0.0
+            scaler = StandardScaler()
+            X_train_scaled = scaler.fit_transform(X_train)
+            X_test_scaled = scaler.transform(X_test)
+            modelo_dicc['X_test'] = X_test_scaled
             modelo_final = LogisticRegression(**mejores, random_state=17, n_jobs=-1, class_weight='balanced')
-            modelo_final.fit(X_train, y_train)
+            modelo_final.fit(X_train_scaled, y_train)
         else:
-            modelo_final.fit(X_train, y_train)
+            modelo_final = mod(**mejores, random_state=17, n_jobs=-1)
+            if nom == 'xgb':
+                modelo_final = XGBClassifier(**mejores, random_state=17, n_jobs=-1, eval_metric='auc', early_stopping_rounds=10, gamma=0.2)
+                modelo_final.fit(X_train, y_train,
+                                eval_set=[(X_train, y_train), (X_test, y_test)])
+            else:
+                modelo_final.fit(X_train, y_train)
+            modelo_dicc['X_test'] = X_test
         print("Mejor modelo: ", modelo_final)
 
         modelo_dicc['modelo'] = modelo_final
+        modelo_dicc['y_pred'] = modelo_final.predict(modelo_dicc['X_test'])
         return modelo_dicc
 
     @staticmethod

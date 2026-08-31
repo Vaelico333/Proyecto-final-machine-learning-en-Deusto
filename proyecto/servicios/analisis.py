@@ -278,6 +278,8 @@ class Analisis():
         from sklearn.metrics import confusion_matrix
 
         y_test = modelo_dict['y_test']
+        if 'y_pred' not in modelo_dict or modelo_dict['y_pred'] is None:
+            modelo_dict['y_pred'] = modelo_dict['modelo'].predict(modelo_dict['X_test'])
         y_pred = modelo_dict['y_pred']
         cm =  confusion_matrix(y_test, y_pred)
 

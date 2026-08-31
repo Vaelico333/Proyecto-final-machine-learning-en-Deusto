@@ -75,6 +75,9 @@ La aplicación presenta un diseño modular, con la interfaz gráfica separada de
 **Gestión de múltiples configuraciones de los modelos**  
 → Entrenamiento centralizado y manejo de los hiperparámetros  
 
+**Reproducibilidad de los modelos de aprendizaje**  
+→ Introducción de semillas controladas (random_state=17)
+
 ## Propósito del proyecto
 
 Para el proyecto final del curso de Machine Learning en Deusto, se me propusieron tres opciones:

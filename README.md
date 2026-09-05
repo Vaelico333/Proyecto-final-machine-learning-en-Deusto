@@ -74,6 +74,7 @@ main.py
 - Visualización de la matriz de confusión y la curva ROC
 - Análisis de importancia de características
 - Persistencia de los modelos a través del proceso
+- Exportación de los modelos y sus metadatos
 - Entrenamiento de modelos multihilo
 - Visualización del control del progreso del entrenamiento mediante script personalizado.  
 - Interfaz gráfica con PyQt5
@@ -207,7 +208,7 @@ Como la idea es explorar varios conceptos, decidí crear un *widget* de pestaña
 
 ### 6. Página de entrenamiento del modelo
 
-En la página de creación del modelo seleccionaremos el modelo a entrenar y los hiperparámetros correspondientes, o bien entrenar el modelo usando *HalvingGridSearchCV*, o validación cruzada en cuadrícula eliminatoria, que evalúa una serie de combinaciones predefinidas de hiperparámetros usando validación cruzada, y selecciona la configuración que mejor funciona según la métrica escogida. Es más eficiente que GridSearchCV, ya no necesita evaluar todas las opciones disponibles, sino que evalúa todos los modelos con pocos datos y escoge la mitad más eficiente, y así sucesivamente hasta encontrar el mejor. Al otorgarle el hiperparámetro *cv=3*, se consigue que se entrenen dos versiones del modelo, y se valide en la tercera.
+En la página de creación del modelo seleccionaremos el modelo a entrenar y los hiperparámetros correspondientes, o bien entrenar el modelo usando *HalvingGridSearchCV*, o validación cruzada en cuadrícula eliminatoria, que evalúa una serie de combinaciones predefinidas de hiperparámetros usando validación cruzada, y selecciona la configuración que mejor funciona según la métrica escogida. Es más eficiente que GridSearchCV, ya no necesita evaluar todas las opciones disponibles, sino que evalúa todos los modelos con pocos datos y escoge la mitad más eficiente, y así sucesivamente hasta encontrar el mejor. Al otorgarle el hiperparámetro *cv=3*, se crean tres *folds*, que dividen el set de datos en 3 partes, entrenando cada vez en 2 de ellas y rotando la parte del dataset en la que se valida. Además, la validación cruzada va eliminando las configuraciones poco prometedoras.  
 Aquí, para cada uno de los tres posibles modelos, creamos una pestaña, con la siguiente estructura:
 
 1. Izquierda: arriba, un selector para cada uno de los hiperparámetros, con su botón de entrenar el modelo con ellos o con validación cruzada. Más abajo, un cuadro de texto donde explicamos el modelo y sus parámetros, y finalmente, un texto con los datos del modelo ya entrenado que sólo aparece al crearlo.

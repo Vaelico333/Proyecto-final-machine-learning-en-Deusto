@@ -364,6 +364,7 @@ class Modelo():
                  if metadatos else {})
 
         documento = {
+            'created_at': {hora_actual},
             'model': {
                 'name': nom_modelo,
                 'artifact': nom_archivo_modelo,

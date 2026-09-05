@@ -89,12 +89,6 @@ Como podemos ver en la gráfica de la derecha, el ajuste a los datos reales bast
 
 Parámetros:
 <ul>
-<li><u><b>Penalty</b></u>: es la regularización que se aplica al modelo, que castiga los coeficientes demasiado grandes para evitar el overfitting. Opciones:</li>
-    <ul>
-    <li><i>l2</i>: la llamada técnica <i>Ridge</i>, es la predeterminada, y penaliza la suma de los cuadrados de los coeficientes.</li>
-    <li><i>l1</i>: conocida como <i>Lasso</i>, penaliza el valor absoluto de los coeficientes, pudiendo llevar algunos valores a 0, y actuando así como una herramienta de selección de variables.</li>
-    <li><i>None</i>: no aplica ninguna regularización</li>
-    </ul>
 <li><u><b>C</b></u>: controla cómo de fuerte es la penalización aplicada. Consiste en un número de tipo "float" positivo.</li>
 <ul>
     <li>Valor bajo: presentará una regularización fuerte. Se evita el overfitting, pero el modelo podría perder capacidad de ajuste.</li>

@@ -1,0 +1,54 @@
+{
+    "model": {
+        "name": "LogisticRegression",
+        "artifact": "LogisticRegression_20260904_134001.pkl",
+        "pipeline": true,
+        "parameters": {
+            "C": 10.0,
+            "class_weight": "balanced",
+            "dual": false,
+            "fit_intercept": true,
+            "intercept_scaling": 1,
+            "l1_ratio": 0,
+            "max_iter": 100,
+            "n_jobs": -1,
+            "penalty": "elasticnet",
+            "random_state": 17,
+            "solver": "saga",
+            "tol": 0.0001,
+            "verbose": 0,
+            "warm_start": false
+        }
+    },
+    "kpis": {
+        "Exactitud": 0.9224,
+        "Precisión": 0.9474576271186441,
+        "Sensibilidad": 0.8944,
+        "F1": 0.920164609053498
+    },
+    "training": {
+        "tipo_modelo": "LogisticRegression",
+        "random_state": 17,
+        "test_size": 0.25,
+        "feature_names": [
+            "edad",
+            "IMC",
+            "presion_sistolica",
+            "glucosa_mg_dL"
+        ],
+        "target_column": "hospitalizacion",
+        "preprocessing": {
+            "scaler": "StandardScaler"
+        }
+    },
+    "software_versions": {
+        "scikit_learn": "1.8.0"
+    },
+    "dataset": {
+        "entries": 5000,
+        "target_distribution": {
+            "No": 0.5,
+            "Sí": 0.5
+        }
+    }
+}

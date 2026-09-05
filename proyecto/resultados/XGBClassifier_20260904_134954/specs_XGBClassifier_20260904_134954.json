@@ -1,0 +1,71 @@
+{
+    "model": {
+        "name": "XGBClassifier",
+        "artifact": "XGBClassifier_20260904_134954.ubj",
+        "pipeline": false,
+        "parameters": {
+            "objective": "binary:logistic",
+            "base_score": null,
+            "booster": null,
+            "colsample_bylevel": null,
+            "colsample_bynode": null,
+            "colsample_bytree": 0.6,
+            "device": null,
+            "eval_metric": "auc",
+            "gamma": null,
+            "grow_policy": null,
+            "interaction_constraints": null,
+            "learning_rate": 0.05,
+            "max_bin": null,
+            "max_cat_threshold": null,
+            "max_cat_to_onehot": null,
+            "max_delta_step": null,
+            "max_depth": 7,
+            "max_leaves": null,
+            "min_child_weight": 1,
+            "monotone_constraints": null,
+            "multi_strategy": null,
+            "n_jobs": -1,
+            "num_parallel_tree": null,
+            "random_state": 17,
+            "reg_alpha": 1,
+            "reg_lambda": 1,
+            "sampling_method": null,
+            "scale_pos_weight": null,
+            "subsample": 0.9,
+            "tree_method": null,
+            "validate_parameters": null,
+            "verbosity": null
+        }
+    },
+    "kpis": {
+        "Exactitud": 0.9768,
+        "Precisión": 0.9885245901639345,
+        "Sensibilidad": 0.9648,
+        "F1": 0.9765182186234818
+    },
+    "training": {
+        "tipo_modelo": "XGBClassifier",
+        "random_state": 17,
+        "test_size": 0.25,
+        "feature_names": [
+            "edad",
+            "IMC",
+            "presion_sistolica",
+            "glucosa_mg_dL"
+        ],
+        "target_column": "hospitalizacion",
+        "preprocessing": null
+    },
+    "software_versions": {
+        "scikit_learn": "1.8.0",
+        "xgboost": "3.1.3"
+    },
+    "dataset": {
+        "entries": 5000,
+        "target_distribution": {
+            "No": 0.5,
+            "Sí": 0.5
+        }
+    }
+}

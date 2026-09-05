@@ -15,6 +15,11 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
+def nombre_modelo(modelo: dict) -> str:
+    """Devuelve el nombre lógico del estimador, incluso si está dentro de un Pipeline."""
+    return modelo.get('tipo_modelo', type(modelo['modelo']).__name__)
+
+
 class PaginaBienvenida(QWidget):
     """Página de bienvenida"""
     def __init__(self, widget_apilado):
@@ -607,7 +612,7 @@ class CreacionModelo(QWidget):
                 btn_optim.setStyleSheet(u"background-color: #00b300;") # Color verde
                 btn_crear.setStyleSheet(u"background-color: #68c5d8;") # Color azulado
                 self.capturador_actual = CapturadorConsola() # Captura progreso mediante verbose en consola
-                trabajador = Trabajador(Modelo.gs_cv, nom, capturador=self.capturador_actual) # Gestiona el entrenamiento del modelo
+                trabajador = Trabajador(Modelo.validacion_cruzada_cuadricula_mitad, nom, capturador=self.capturador_actual) # Gestiona el entrenamiento del modelo
 
                 # Conectamos el capturador con las barras de progreso
                 self.capturador_actual.progreso_total.connect(barra_progreso_total.setValue)
@@ -645,15 +650,15 @@ class CreacionModelo(QWidget):
                 
                 if nom == 'reglog':
                     control_entrenamiento.total_pasos = parametros['max_iter'].currentData() # El número total de pasos de la barra de progreso será "max_iter"
-                    trabajador = Trabajador(Modelo.reglog, *params, objeto_control=control_entrenamiento) # Gestiona el entrenamiento del modelo
+                    trabajador = Trabajador(Modelo.regresion_logistica, *params, objeto_control=control_entrenamiento) # Gestiona el entrenamiento del modelo
 
                 elif nom == 'bosque':
                     control_entrenamiento.total_pasos = parametros['n_estimators'].currentData() # El número total de pasos de la barra de progreso será "n_estimators"
-                    trabajador = Trabajador(Modelo.bosque, *params, objeto_control=control_entrenamiento) # Gestiona el entrenamiento del modelo
+                    trabajador = Trabajador(Modelo.bosque_aleatorio, *params, objeto_control=control_entrenamiento) # Gestiona el entrenamiento del modelo
 
                 elif nom == 'xgb':
                     control_entrenamiento.total_pasos = parametros['n_estimators'].currentData() # El número total de pasos de la barra de progreso será "n_estimators"
-                    trabajador = Trabajador(Modelo.xgb, *params, objeto_control=control_entrenamiento) # Gestiona el entrenamiento del modelo
+                    trabajador = Trabajador(Modelo.potenciacion_gradiente_extremo, *params, objeto_control=control_entrenamiento) # Gestiona el entrenamiento del modelo
 
                 trabajador.señales.progreso.connect(barra_progreso_total.setValue) # El trabajador emite una señal de progreso que conectamos con la barra de progreso
                 trabajador.señales.terminado.connect(terminar_entrenamiento) # Señal de finalización 
@@ -708,7 +713,7 @@ class CreacionModelo(QWidget):
             modelo['y_pred'] = modelo['modelo'].predict(X) # Creamos y añadimos al diccionario la predicción
             GrafModelo.graf_muestra(y, modelo['y_pred'], ax) # Dibujamos la gráfica en el eje que ya creamos
 
-            nom_modelo = type(modelo['modelo']).__name__
+            nom_modelo = nombre_modelo(modelo)
             ax.set_title(f'{nom_modelo} de hospitalización de pacientes')
 
             # Actualizamos el lienzo
@@ -850,7 +855,7 @@ class EvaluacionModelo(QWidget):
         """
         self.modelo = modelo
         print(self.modelo)
-        self.etiqueta_titulo.setText(f"Evaluación del modelo {type(self.modelo['modelo']).__name__}")
+        self.etiqueta_titulo.setText(f"Evaluación del modelo {nombre_modelo(self.modelo)}")
         self.crear_kpis()
         self.crear_graficas()
 
@@ -978,7 +983,7 @@ class EvaluacionModelo(QWidget):
             ax = fig.add_subplot(111)
             axes.append(ax)
             fig.tight_layout(w_pad=1.15)
-        nom = type(self.modelo["modelo"]).__name__
+        nom = nombre_modelo(self.modelo)
         axes, metricas = Evaluacion.eval_modelo(self.modelo, axes, nom)
         self.modelo['metricas'] = metricas # Añade los KPIs al diccionario del modelo
 
@@ -1015,7 +1020,7 @@ class InformeFinal(QWidget):
         :type modelo: dict
         """
         self.modelo = modelo
-        nom_modelo = type(self.modelo["modelo"]).__name__
+        nom_modelo = nombre_modelo(self.modelo)
         self.etiqueta_titulo.setText(f"Informe del modelo {nom_modelo}")
 
         print("Datos del modelo:\n",self.modelo)
@@ -1136,7 +1141,7 @@ class InformeFinal(QWidget):
         mensaje = ''
         try:
             mensaje = Modelo.guardar_modelo(modelo=self.modelo['modelo'],
-                                kpis= self.modelo['kpis'])
+                                kpis=self.modelo['kpis'], metadatos=self.modelo)
             QMessageBox.information(self, 'Guardado del modelo', mensaje)
         except Exception as e:
             print('Error:', e)
@@ -1146,7 +1151,7 @@ class InformeFinal(QWidget):
         """Limpia y crea la gráfica correspondiente."""
         self.figura.clear()
         ax = self.figura.add_subplot(111)
-        nom = type(self.modelo["modelo"]).__name__
+        nom = nombre_modelo(self.modelo)
         Informes.grafico_final(self.modelo, ax, nom)
         self.figura.tight_layout(w_pad=1.15)
         self.area_graf.draw()

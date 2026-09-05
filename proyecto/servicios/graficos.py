@@ -1,7 +1,10 @@
 from servicios.analisis import Limpieza
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from pandas import Series, DataFrame
+from numpy import ndarray
+
 class Eda:
-    from matplotlib.figure import Figure
-    from matplotlib.axes import Axes
     @staticmethod
     def col_hosp(figura: Figure) -> Axes:
         """
@@ -70,9 +73,6 @@ class Eda:
         return ax
     
 class GrafModelo:
-    from matplotlib.axes import Axes
-    from pandas import Series
-    from numpy import ndarray
     @staticmethod
     def graf_muestra(y_test: Series, y_pred: ndarray, ax: Axes) -> Axes:
         """
@@ -98,9 +98,6 @@ class GrafModelo:
         return ax
 
 class EvaluacionGraf:
-    from pandas import DataFrame
-    from numpy import ndarray
-    from matplotlib.axes import Axes
     @staticmethod
     def matriz_conf(cm: ndarray, ax: Axes) -> Axes:
         """
@@ -209,7 +206,6 @@ class EvaluacionGraf:
         return ax
     
 class Informes:
-    from matplotlib.axes import Axes
     @staticmethod
     def grafico_final(modelo_dict: dict, ax: Axes, nom: str) -> Axes:
         """
@@ -228,8 +224,9 @@ class Informes:
         modelo = modelo_dict['modelo']
         X = modelo_dict['X_test']
         if nom == 'LogisticRegression':
-            coefs = modelo.coef_[0]
-            columnas = Limpieza.limpiar_errores().drop(columns='hospitalizacion').columns
+            estimador = modelo.named_steps['model'] if hasattr(modelo, 'named_steps') else modelo
+            coefs = estimador.coef_[0]
+            columnas = modelo_dict.get('feature_names', X.columns)
             ax.barh(columnas, coefs, color=['red' if c < 0 else 'blue' for c in coefs])
             ax.axvline(0, color='black', linestyle='--')
             ax.set_title("Impacto de las Variables (Coeficientes)")

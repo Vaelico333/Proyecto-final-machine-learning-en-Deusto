@@ -1,8 +1,10 @@
 from servicios.analisis import Analisis, Limpieza, Leer_Datos
 from servicios.trabajador import Decorador
+from numpy import ndarray
+from pandas import Series
+from matplotlib.axes import Axes
+
 class Modelo():
-    from pandas import DataFrame
-    from numpy import ndarray
     @staticmethod
     def params(modelo: str) -> dict:
         """
@@ -16,8 +18,7 @@ class Modelo():
         parametros_reglog = {'l1_ratio':[1.0,0.5,0],
                              'C':[0.01, 0.1, 1.0, 10.0],
                              'solver':['liblinear','newton-cg','saga'],
-                             'max_iter':[100, 1000, 10000],
-                             'penalty':['elasticnet']}
+                                 'max_iter':[100, 1000, 10000]}
         
         parametros_bosque = {'n_estimators':[100, 200],
                              'max_depth':[5, 10],
@@ -44,7 +45,7 @@ class Modelo():
     
     @Decorador.progreso
     @staticmethod
-    def reglog(*args, **kwargs):
+    def regresion_logistica(*args, **kwargs):
         """
         Entrena un modelo de regresión logística usando los hiperparámetros aportados en args y devuelve un diccionario que contiene el modelo, X_test e y_test.
         
@@ -54,12 +55,13 @@ class Modelo():
         from sklearn.preprocessing import StandardScaler
         from sklearn.model_selection import train_test_split
         from sklearn.linear_model import LogisticRegression
+        from sklearn.pipeline import Pipeline
         reporte = kwargs['reporte_progreso']
         control = kwargs['objeto_control']
 
-        modelo_dicc = {}
         df = Limpieza.limpiar_errores()
         X = df.drop(columns='hospitalizacion')
+        columnas = X.columns.tolist()
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
 
@@ -70,33 +72,41 @@ class Modelo():
         solver = args[2]
         max_iter = args[3]
 
-        if solver in ['liblinear', 'newton-cg']:
+        if solver != 'saga':
             l1_ratio = None
+            penalty = 'l2'
+        else:
+            penalty = 'elasticnet'
 
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
-        X_test = scaler.transform(X_test)
-        modelo_dicc['X_test'] = X_test
-        modelo_dicc['y_test'] = y_test
-
-        modelo = LogisticRegression(
-            l1_ratio=l1_ratio,
-            C=C,
-            solver=solver,
-            max_iter=max_iter,
-            class_weight='balanced',
-            random_state=17
-        )
+        modelo = Pipeline([
+            ('scaler', StandardScaler()),
+            ('model', LogisticRegression(
+                l1_ratio=l1_ratio,
+                C=C,
+                solver=solver,
+                penalty=penalty,
+                max_iter=max_iter,
+                class_weight='balanced',
+                random_state=17
+            ))
+        ])
         for n in range(1, max_iter + 1):
             modelo.fit(X_train, y_train)
             reporte(n)
+        modelo_dicc = {'X_test': X_test, 'y_test': y_test,
+                       'tipo_modelo': 'LogisticRegression',
+                       'random_state': 17,
+                       'test_size': 0.25,
+                       'feature_names': columnas,
+                       'target_column': 'hospitalizacion',
+                       'preprocessing': {'scaler': 'StandardScaler'}}
         modelo_dicc['modelo'] = modelo
         modelo_dicc['y_pred'] = modelo.predict(X_test)
         return modelo_dicc
 
     @Decorador.progreso
     @staticmethod
-    def bosque(*args, **kwargs):
+    def bosque_aleatorio(*args, **kwargs):
         """
         Entrena un modelo de bosque aleatorio usando los hiperparámetros aportados en args y devuelve un diccionario que contiene el modelo, X_test e y_test.
         
@@ -109,15 +119,14 @@ class Modelo():
         reporte = kwargs['reporte_progreso']
         control = kwargs['objeto_control']
 
-        modelo_dicc = {}
         df = Limpieza.limpiar_errores()
         X = df.drop(columns='hospitalizacion')
+        columnas = X.columns.tolist()
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
-        modelo_dicc['X_test'] = X_test
-        modelo_dicc['y_test'] = y_test
+        modelo_dicc = {'X_test': X_test, 'y_test': y_test}
 
         n_estimators, max_depth, min_samples_split, min_samples_leaf, max_features, bootstrap = args
         modelo =  RandomForestClassifier(n_estimators=1, max_depth=max_depth, min_samples_split=min_samples_split,
@@ -129,12 +138,15 @@ class Modelo():
             reporte(n)
         modelo_dicc['modelo'] = modelo
         modelo_dicc['y_pred'] = modelo.predict(X_test)
+        modelo_dicc.update({'tipo_modelo': 'RandomForestClassifier', 'random_state': 17,
+                    'test_size': 0.25, 'feature_names': columnas,
+                    'target_column': 'hospitalizacion', 'preprocessing': None})
 
         return modelo_dicc
 
     @Decorador.progreso
     @staticmethod
-    def xgb(*args, **kwargs):
+    def potenciacion_gradiente_extremo(*args, **kwargs):
         """
         Entrena un modelo de potenciación extrema del gradiente usando los hiperparámetros aportados en args y devuelve un diccionario que contiene el modelo, X_test e y_test.
         
@@ -155,17 +167,16 @@ class Modelo():
                 reporte(epoch+1)
                 return False
 
-        modelo_dicc = {}
         df = Limpieza.limpiar_errores()
         X = df.drop(columns='hospitalizacion')
+        columnas = X.columns.tolist()
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, stratify=y)
         X_fit, X_val, y_fit, y_val = train_test_split(
             X_train, y_train, test_size=0.2, random_state=17, stratify=y_train)
-        modelo_dicc['X_test'] = X_test
-        modelo_dicc['y_test'] = y_test
+        modelo_dicc = {'X_test': X_test, 'y_test': y_test}
 
         modelo = XGBClassifier(n_estimators=n_estimators, learning_rate=learning_rate,
                        max_depth=max_depth, min_child_weight=min_child_weight, 
@@ -176,10 +187,14 @@ class Modelo():
                 eval_set=[(X_fit, y_fit), (X_val, y_val)])
         modelo_dicc['modelo'] = modelo
         modelo_dicc['y_pred'] = modelo.predict(X_test)
+        modelo_dicc.update({'tipo_modelo': 'XGBClassifier', 'random_state': 17,
+                    'test_size': 0.25, 'validation_size': 0.2,
+                    'feature_names': columnas, 'target_column': 'hospitalizacion',
+                    'preprocessing': None})
         return modelo_dicc
     
     @staticmethod
-    def gs_cv(nom: str, **kwargs):
+    def validacion_cruzada_cuadricula_mitad(nom: str, **kwargs):
         """
         Entrena el modelo solicitado mediante HalvingGridSearchCV usando los hiperparámetros contenidos en Modelo.params() y devuelve un diccionario que contiene el modelo, X_test e y_test.
         
@@ -194,11 +209,13 @@ class Modelo():
         from xgboost import XGBClassifier
         from sklearn.model_selection import train_test_split
         from sklearn.preprocessing import StandardScaler
+        from sklearn.pipeline import Pipeline
         from joblib import parallel_backend
 
         modelo_dicc = {}
         df = Limpieza.limpiar_errores()
         X = df.drop(columns='hospitalizacion')
+        columnas = X.columns.tolist()
         mapa = {'Sí':1, 'No':0}
         y = df['hospitalizacion'].map(mapa)
 
@@ -208,8 +225,16 @@ class Modelo():
         parametros = Modelo.params(nom)
 
         if nom == 'reglog':
-            modelo = LogisticRegression(random_state=17, n_jobs=1)
-            mod = LogisticRegression
+            modelo = Pipeline([
+                ('scaler', StandardScaler()),
+                ('model', LogisticRegression(random_state=17, n_jobs=1, class_weight='balanced'))
+            ])
+            parametros = {'model__l1_ratio': parametros['l1_ratio'],
+                          'model__C': parametros['C'],
+                          'model__max_iter': parametros['max_iter'],
+                          'model__solver': ['saga'],
+                          'model__penalty': ['elasticnet']}
+            mod = Pipeline
         elif nom == 'bosque':
             modelo = RandomForestClassifier(max_samples=0.5, random_state=17, n_jobs=1)
             mod = RandomForestClassifier
@@ -239,16 +264,13 @@ class Modelo():
         #Escojo la mejor configuración y entreno con ella el mejor modelo
         mejores = hgscv.best_params_
         if nom == 'reglog':
-            if mejores.get('solver') in ['liblinear', 'newton-cg']:
-                mejores.pop('l1_ratio', None)
-            if 'l1_ratio' in mejores and mejores['l1_ratio'] == 0:
-                mejores['l1_ratio'] = 0.0
-            scaler = StandardScaler()
-            X_train_scaled = scaler.fit_transform(X_train)
-            X_test_scaled = scaler.transform(X_test)
-            modelo_dicc['X_test'] = X_test_scaled
-            modelo_final = LogisticRegression(**mejores, random_state=17, n_jobs=-1, class_weight='balanced')
-            modelo_final.fit(X_train_scaled, y_train)
+            modelo_final = Pipeline([
+                ('scaler', StandardScaler()),
+                ('model', LogisticRegression(random_state=17, n_jobs=-1, class_weight='balanced'))
+            ])
+            modelo_final.set_params(**mejores)
+            modelo_final.fit(X_train, y_train)
+            modelo_dicc['X_test'] = X_test
         else:
             modelo_final = mod(**mejores, random_state=17, n_jobs=-1)
             if nom == 'xgb':
@@ -264,10 +286,14 @@ class Modelo():
 
         modelo_dicc['modelo'] = modelo_final
         modelo_dicc['y_pred'] = modelo_final.predict(modelo_dicc['X_test'])
+        modelo_dicc.update({'tipo_modelo': 'LogisticRegression' if nom == 'reglog' else type(modelo_final).__name__,
+                    'random_state': 17, 'test_size': 0.25,
+                    'feature_names': columnas, 'target_column': 'hospitalizacion',
+                    'preprocessing': {'scaler': 'StandardScaler'} if nom == 'reglog' else None})
         return modelo_dicc
 
     @staticmethod
-    def guardar_modelo(modelo: object, kpis: dict) -> str:
+    def guardar_modelo(modelo: object, kpis: dict, metadatos: dict = None) -> str:
         """
         Guarda el modelo actual en formato .ubj si es XGBoost, o .pkl en los otros casos.
         
@@ -283,10 +309,14 @@ class Modelo():
         import joblib
         import xgboost
         import sklearn
+        import json
+        import numpy as np
         import pandas as pd
+        from sklearn.pipeline import Pipeline
 
         hora_actual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        nom_modelo = type(modelo).__name__
+        es_pipeline_reglog = isinstance(modelo, Pipeline)
+        nom_modelo = 'LogisticRegression' if es_pipeline_reglog else type(modelo).__name__
 
         raiz_proyecto = os.path.dirname(os.path.dirname(__file__))
         url_resultados = os.path.join(raiz_proyecto, "resultados")
@@ -294,7 +324,7 @@ class Modelo():
             os.makedirs(url_resultados, exist_ok=True)
         url_modelo = os.path.join(url_resultados, f"{nom_modelo}_{hora_actual}")
         os.makedirs(url_modelo, exist_ok=True)
-        nom_archivo_specs = f'specs_{nom_modelo}_{hora_actual}.txt'
+        nom_archivo_specs = f'specs_{nom_modelo}_{hora_actual}.json'
         url_archivo_specs = os.path.join(url_modelo, nom_archivo_specs)
         print(url_archivo_specs)
 
@@ -303,62 +333,70 @@ class Modelo():
             url_archivo_modelo = os.path.join(url_modelo, nom_archivo_modelo)
             parametros = modelo.get_xgb_params()
             modelo.save_model(url_archivo_modelo)
-            if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
-                try:
-                    nuevo_modelo = xgboost.XGBClassifier()
-                    nuevo_modelo.load_model(url_archivo_modelo)
-                    mensaje = "El modelo se guardó correctamente y es válido."
-                except Exception as e:
-                    mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
-            else:
-                mensaje = f"Error: El archivo '{url_archivo_modelo}' no se encontró o está vacío."
-
-        elif nom_modelo == 'LogisticRegression' or nom_modelo == 'RandomForestClassifier':
+            try:
+                xgboost.XGBClassifier().load_model(url_archivo_modelo)
+                mensaje = "El modelo se guardó correctamente y es válido."
+            except Exception as e:
+                mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
+        elif nom_modelo in {'LogisticRegression', 'RandomForestClassifier'}:
             nom_archivo_modelo = f'{nom_modelo}_{hora_actual}.pkl'
             url_archivo_modelo = os.path.join(url_modelo, nom_archivo_modelo)
-            parametros = modelo.get_params()
+            estimador = modelo.named_steps['model'] if es_pipeline_reglog else modelo
+            parametros = estimador.get_params()
             joblib.dump(modelo, url_archivo_modelo)
-            if os.path.exists(url_archivo_modelo) and os.path.getsize(url_archivo_modelo) > 0:
-                try:
-                    joblib.load(url_archivo_modelo)
-                    mensaje = "El modelo se guardó correctamente y es válido."
-                except Exception as e:
-                    mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
-            else:
-                mensaje = f"Error: El archivo '{url_archivo_modelo}' no se encontró o está vacío."
-        print(url_archivo_modelo)
-
-        specs = ''
-        specs += f'Parámetros del modelo {nom_modelo}:\n'
-        for k in parametros:
-            if parametros[k] is not None:
-                specs += f'{k}: {parametros[k]}\n'
-        specs += f'\nIndicadores clave de rendimiento (KPIs):\n'
-        for k in kpis:
-            specs += f'{k}: {round(kpis[k], 4)}\n'
-
-        if nom_modelo == 'LogisticRegression' or nom_modelo == 'RandomForestClassifier':
-            specs += f'\nVersión de Scikit-Learn: {sklearn.__version__}'
-        elif nom_modelo == 'XGBClassifier':
-            specs += f'\nVersión de XGBoost: {xgboost.__version__}'
+            try:
+                joblib.load(url_archivo_modelo)
+                mensaje = "El modelo se guardó correctamente y es válido."
+            except Exception as e:
+                mensaje = f"El archivo se guardó correctamente pero el modelo es inválido: {e}"
+        else:
+            raise ValueError(f'Tipo de modelo no soportado: {nom_modelo}')
 
         df = Leer_Datos.abrir_csv()
-        entradas = len(df)
         proporcion = df['hospitalizacion'].value_counts(normalize=True)
-        specs += f'\n\nNúmero de entradas en el conjunto de datos: {entradas}\n'
-        print(proporcion)
-        specs += f'Proporción de hospitalizaciones:\nSí: {proporcion["Sí"]*100}%\nNo: {proporcion["No"]*100}%\n'
-        
+        versiones = {'scikit_learn': sklearn.__version__}
+        if nom_modelo == 'XGBClassifier':
+            versiones['xgboost'] = xgboost.__version__
+
+        campos_excluidos = {'modelo', 'y_pred', 'X_test', 'y_test', 'kpis', 'metricas'}
+        entrenamiento = ({clave: valor for clave, valor in metadatos.items()
+                  if clave not in campos_excluidos}
+                 if metadatos else {})
+
+        documento = {
+            'model': {
+                'name': nom_modelo,
+                'artifact': nom_archivo_modelo,
+                'pipeline': es_pipeline_reglog,
+                'parameters': parametros
+            },
+            'kpis': kpis,
+            'training': entrenamiento,
+            'software_versions': versiones,
+            'dataset': {
+                'entries': len(df),
+                'target_distribution': proporcion.to_dict()
+            }
+        }
+
+        def convertir_json(valor):
+            if isinstance(valor, (pd.Series, pd.Index)):
+                return valor.tolist()
+            if isinstance(valor, pd.DataFrame):
+                return valor.to_dict()
+            if isinstance(valor, np.ndarray):
+                return valor.tolist()
+            if isinstance(valor, np.generic):
+                return valor.item()
+            return str(valor)
+
         with open(url_archivo_specs, 'w', encoding='UTF-8') as f:
-            f.write(specs)
+            json.dump(documento, f, ensure_ascii=False, indent=4, default=convertir_json)
 
         print(mensaje)
         return mensaje
 
 class Evaluacion:
-    from numpy import ndarray
-    from pandas import Series
-    from matplotlib.axes import Axes
     @staticmethod
     def kpis(y_test: Series, y_pred: ndarray) -> dict:
         """

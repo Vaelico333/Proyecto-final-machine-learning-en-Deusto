@@ -1,4 +1,5 @@
 from servicios.analisis import Leer_Datos, Limpieza
+from pandas import DataFrame
 
 class Textos:
     @staticmethod
@@ -152,7 +153,6 @@ Parámetros:
         return texto
     
 class Info:
-    from pandas import DataFrame
     @staticmethod
     def extraer_info(info: list) -> tuple[list]:
         """

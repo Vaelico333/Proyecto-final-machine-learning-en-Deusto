@@ -1,6 +1,6 @@
 # Predicción de hospitalización de pacientes - Aplicación de escritorio basada en Python
 
-[Resumen](#resumen-del-proyecto) · [Características](#características-clave) · [Arquitectura](#arquitectura) · [Desafíos](#desafíos-técnicos) · [Propósito](#propósito-del-proyecto)  
+[Resumen](#resumen-del-proyecto) · [Instalación](#instalación-y-ejecución) · [Características](#características-clave) · [Arquitectura](#arquitectura) · [Desafíos](#desafíos-técnicos) · [Propósito](#propósito-del-proyecto)  
 [Fases](#fases-del-desarrollo) · [Módulos](#modularización) · [Aprendizaje](#qué-he-aprendido)
 
 ## Resumen del proyecto
@@ -10,17 +10,55 @@ Este proyecto es una aplicación de escritorio construida utilizando Python y Py
 Esta aplicación se diseñó como un entorno educacional y experimental para comprender cómo la recolección y limpieza de los datos, así como la selección del modelo y sus hiperparámetros, afectan al resultado de la tarea de clasificación.
 Los datos se han diseñado de manera que imiten la imperfecta recolección de datos en el mundo real, pero para poder crear modelos fiables, se les aplica una limpieza:  
   
-Datos artificiales
-       ↓
-Unidades incoherentes
-       ↓
-Errores introducidos
-       ↓
-Limpieza de datos
-       ↓
-	  EDA
-       ↓
-Entrenamiento del modelo
+Datos artificiales  
+       ↓  
+Unidades incoherentes  
+       ↓  
+Errores introducidos  
+       ↓  
+Limpieza de datos  
+       ↓  
+	  EDA  
+       ↓  
+Entrenamiento del modelo  
+
+## Instalación y ejecución
+
+### Clonar el repositorio
+
+Se puede clonar desde la página de GitHub, o bien:  
+
+```bash
+git clone https://github.com/Vaelico333/Proyecto-final-machine-learning-en-Deusto.git
+```
+
+### Acceder al repositorio
+
+```bash
+cd .../Proyecto-final-machine-learning-en-Deusto/proyecto
+```
+
+### Instalar dependencias
+
+**Recomendado:** crear entorno virtual:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # Linux/macOS
+.venv\Scripts\activate    # Windows
+```
+
+Instalar las dependencias:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Ejecutar la aplicación
+
+```python
+main.py
+```
 
 ## Características clave
 
@@ -237,33 +275,15 @@ Desde el módulo **trabajador** se gestiona tanto el control de progreso del ent
 Mediante esta aplicación, me ha sido posible crear y comparar los tres tipos de modelo de clasificación utilizados: regresión logística, bosque aleatorio e incremento extremo del gradiente (XGBoost).  
 Para encontrar los mejores modelos, utilicé la técnica de validación cruzada en cuadrícula (HalvingGridSearchCV). Los resultados son:
 
-### Modelo con mejores características generales
+### Resultados de la evaluación de los modelos de ejemplo
 
-El modelo que mejor F1 presenta, siendo esta métrica una media armónica de la precisión y la sensibilidad, es el modelo **XGBoost**:  
+| Modelo              | Exactitud | Precisión | Sensibilidad |F1       |
+| ------------------- | --------: | --------: | -----------: | ------: |
+| Logistic Regression |    0.9224 |    0.9474 |       0.8944 |  0.9201 |
+| Random Forest       |    0.9768 |    0.9885 |       0.9648 |  0.9765 |
+| XGBoost             |    0.9768 |    0.9885 |       0.9648 |  0.9765 |
 
-- Exactitud: 0.9775  
-- Precisión: 0.9942  
-- Sensibilidad: 0.9606  
-- F1: 0.9771  
-
-Sus hiperparámetros, escogidos mediante HalvingGridSearchCV, son:  
-
-- objective: binary:logistic
-- colsample_bytree: 0.6
-- gamma: 0.2
-- learning_rate: 0.05
-- max_depth: 5
-- min_child_weight: 1
-- reg_alpha: 0
-- reg_lambda: 0
-- subsample: 0.6
-
-
-### Modelo con mejor característica para el caso (sensibilidad)
-
-
-
-## Qué he aprendido 
+## Qué he aprendido
 
 ### Lo que este proyecto demuestra
 

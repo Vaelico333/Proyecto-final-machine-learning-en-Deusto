@@ -1,6 +1,9 @@
 from servicios.generador_datos import Generador_Datos 
+import pandas as pd
+from pandas import DataFrame, Series
+from numpy import ndarray
+
 class Leer_Datos:
-    import pandas as pd
     @staticmethod
     def abrir_csv(url: str = 'datos_forjados.csv') -> pd.DataFrame:
         """
@@ -45,8 +48,6 @@ class Leer_Datos:
         return df_muestra
 
 class Limpieza():
-    from pandas import DataFrame, Series
-    from numpy import ndarray
     @staticmethod
     def operacion_str(num: float, *args) -> float:
         """
@@ -238,8 +239,6 @@ class Limpieza():
     
 
 class Analisis():
-    from pandas import DataFrame, Series
-    from numpy import ndarray
     @staticmethod
     def log_loss_modelo(modelo_dict: dict) -> list[float]:
         """

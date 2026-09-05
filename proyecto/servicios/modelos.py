@@ -90,9 +90,9 @@ class Modelo():
                 random_state=17
             ))
         ])
-        for n in range(1, max_iter + 1):
-            modelo.fit(X_train, y_train)
-            reporte(n)
+        reporte(0)
+        modelo.fit(X_train, y_train)
+        reporte(max_iter)
         modelo_dicc = {'X_test': X_test, 'y_test': y_test,
                        'tipo_modelo': 'LogisticRegression',
                        'random_state': 17,
